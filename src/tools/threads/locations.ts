@@ -13,16 +13,29 @@ export function registerThreadsLocationTools(server: McpServer, client: MetaClie
       longitude: z.number().optional().describe("Longitude of a location (must be used with latitude)"),
     },
     async ({ q, latitude, longitude }) => {
-      try {
-        const params: Record<string, unknown> = {};
-        if (q) params.q = q;
-        if (latitude !== undefined) params.latitude = latitude;
-        if (longitude !== undefined) params.longitude = longitude;
-        const { data, rateLimit } = await client.threads("GET", "/location_search", params);
-        return { content: [{ type: "text", text: JSON.stringify({ ...data as object, _rateLimit: rateLimit }, null, 2) }] };
-      } catch (error) {
-        return { content: [{ type: "text", text: `Search locations failed: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
+      const coords: Record<string, unknown> = {};
+      if (latitude !== undefined) coords.latitude = latitude;
+      if (longitude !== undefined) coords.longitude = longitude;
+
+      // Meta's own docs disagree on the text parameter name: the location
+      // tagging guide's curl example uses `q`, while the location_search
+      // reference table lists `query`. Try `q` first and fall back to
+      // `query` so the tool works whichever one the API actually accepts.
+      const attempts = q ? [{ q }, { query: q }] : [{}];
+
+      let lastError: unknown;
+      for (const textParam of attempts) {
+        try {
+          const { data, rateLimit } = await client.threads("GET", "/location_search", {
+            ...textParam,
+            ...coords,
+          });
+          return { content: [{ type: "text", text: JSON.stringify({ ...data as object, _rateLimit: rateLimit }, null, 2) }] };
+        } catch (error) {
+          lastError = error;
+        }
       }
+      return { content: [{ type: "text", text: `Search locations failed: ${lastError instanceof Error ? lastError.message : String(lastError)}` }], isError: true };
     }
   );
 

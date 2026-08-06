@@ -30,7 +30,7 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
       gif_id: z.string().optional().describe("GIF ID from GIPHY (id field from GIPHY's API response). GIPHY is currently the only supported GIF provider (Tenor was sunset March 31, 2026)."),
       alt_text: z.string().max(1000).optional().describe("Alt text for accessibility (max 1000 chars)"),
       is_spoiler: z.boolean().optional().describe("Mark content as spoiler"),
-      is_ghost_post: z.boolean().optional().describe("Create a ghost post (auto-archived after 24h). Text-only; cannot be combined with reply_control targeting a specific post, polls, GIFs, or reply approvals."),
+      is_ghost_post: z.boolean().optional().describe("Create a ghost post (auto-archived after 24h). Text-only, and per Meta's docs the only other feature supported alongside it is is_spoiler — do not combine with polls, GIFs, links, topic tags, location, reply approvals, or cross-sharing. Ghost posts also cannot be used to reply to a post."),
       enable_reply_approvals: z.boolean().optional().describe("Require replies to be approved before they're published. Not compatible with ghost posts."),
       location_id: z.string().optional().describe("Location ID to tag (from threads_search_locations)"),
       crossreshare_to_ig: z.boolean().optional().describe("Also share this post to the user's linked Instagram account as a Story"),
