@@ -1,6 +1,6 @@
 # Meta MCP — Instructions for Codex / AI Agents
 
-This project uses the **meta-mcp** MCP server for Instagram Graph API (v25.0), Threads API, and Meta platform management.
+This project uses the **meta-mcp** MCP server for Instagram Graph API (v26.0), Threads API, and Meta platform management.
 
 ## Setup
 
@@ -78,30 +78,41 @@ The MCP server is configured in your MCP settings. It requires environment varia
 ### Threads — Publishing (7)
 | Tool | Purpose |
 |------|---------|
-| `threads_publish_text` | Text post (polls, GIFs, links, topics, quotes, spoiler) |
-| `threads_publish_image` / `threads_publish_video` | Media posts |
-| `threads_publish_carousel` | Carousel (2-20 items) |
+| `threads_publish_text` | Text post (polls, GIFs, links, topics, quotes, spoiler, ghost posts, reply approvals, location, IG Stories cross-share) |
+| `threads_publish_image` / `threads_publish_video` | Media posts (reply approvals, location, IG Stories cross-share) |
+| `threads_publish_carousel` | Carousel (2-20 items, reply approvals, location, IG Stories cross-share) |
 | `threads_delete_post` | Delete (max 100/day) |
 | `threads_get_container_status` | Processing status |
 | `threads_get_publishing_limit` | Quota check (250/day) |
 
-### Threads — Media & Search (3)
+### Threads — Media & Search (4)
 | Tool | Purpose |
 |------|---------|
 | `threads_get_posts` / `threads_get_post` | List/get posts |
-| `threads_search_posts` | Search by keyword or topic tag |
+| `threads_get_profile_posts` | List a public profile's posts by username |
+| `threads_search_posts` | Search `/keyword_search` by keyword or topic tag |
 
-### Threads — Replies (4)
+### Threads — Replies (7)
 | Tool | Purpose |
 |------|---------|
-| `threads_get_replies` | Get replies |
+| `threads_get_replies` | Get top-level replies |
+| `threads_get_conversation` | Get all replies, flattened |
 | `threads_reply` | Reply (image/video support) |
 | `threads_hide_reply` / `threads_unhide_reply` | Moderate |
+| `threads_get_pending_replies` / `threads_manage_pending_reply` | Reply approval queue |
 
-### Threads — Profile & Insights (4)
+### Threads — Profile, Mentions, Locations & oEmbed (7)
 | Tool | Purpose |
 |------|---------|
 | `threads_get_profile` / `threads_get_user_threads` | Profile |
+| `threads_lookup_profile` | Look up a public profile by username |
+| `threads_get_mentions` | Posts where the user was @mentioned |
+| `threads_search_locations` / `threads_get_location` | Location tagging |
+| `threads_get_oembed` | Embed HTML for a public post |
+
+### Threads — Insights (2)
+| Tool | Purpose |
+|------|---------|
 | `threads_get_post_insights` | Post analytics |
 | `threads_get_user_insights` | Account analytics |
 

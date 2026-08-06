@@ -1,6 +1,6 @@
 # meta-mcp
 
-> Full-coverage MCP server for Instagram Graph API (v25.0), Threads API, and Meta platform management. Publish content, manage comments, view insights, and handle DMs — all through AI assistants.
+> Full-coverage MCP server for Instagram Graph API (v26.0), Threads API, and Meta platform management. Publish content, manage comments, view insights, and handle DMs — all through AI assistants.
 
 ## Package
 
@@ -44,7 +44,7 @@ Only set variables for the platforms you use.
 - Threads: Any account
 - Meta token/webhook tools: Meta Developer App
 
-## Tools (57)
+## Tools (66)
 
 ### Meta Platform (6)
 - meta_exchange_token — Exchange short-lived token for long-lived (~60 days)
@@ -102,28 +102,43 @@ Only set variables for the platforms you use.
 - ig_get_message — Get message details
 
 ### Threads — Publishing (7)
-- threads_publish_text — Publish text post (polls, GIFs, link attachments, topic tags, quote, spoiler)
-- threads_publish_image — Publish image post (alt_text, topic tags, spoiler)
-- threads_publish_video — Publish video post (alt_text, topic tags, spoiler)
-- threads_publish_carousel — Publish carousel (2-20 items, alt_text per item)
+- threads_publish_text — Publish text post (polls, GIFs, link attachments, topic tags, quote, spoiler, ghost posts, reply approvals, location, IG Stories cross-share)
+- threads_publish_image — Publish image post (alt_text, topic tags, spoiler, reply approvals, location, IG Stories cross-share)
+- threads_publish_video — Publish video post (alt_text, topic tags, spoiler, reply approvals, location, IG Stories cross-share)
+- threads_publish_carousel — Publish carousel (2-20 items, alt_text per item, reply approvals, location, IG Stories cross-share)
 - threads_delete_post — Delete a post (max 100/day)
 - threads_get_container_status — Check container processing status
 - threads_get_publishing_limit — Check remaining quota (250 posts/day)
 
-### Threads — Media & Search (3)
+### Threads — Media & Search (4)
 - threads_get_posts — List published posts
 - threads_get_post — Get post details
-- threads_search_posts — Search public posts by keyword or topic tag
+- threads_get_profile_posts — List a public profile's posts by username (Profile Discovery)
+- threads_search_posts — Search public posts via /keyword_search by keyword or topic tag
 
-### Threads — Replies (4)
-- threads_get_replies — Get replies to a post
+### Threads — Replies (7)
+- threads_get_replies — Get top-level replies to a post
+- threads_get_conversation — Get all replies to a post, flattened
 - threads_reply — Reply to a post (supports image/video attachments)
 - threads_hide_reply — Hide a reply
 - threads_unhide_reply — Unhide a reply
+- threads_get_pending_replies — Get replies awaiting approval
+- threads_manage_pending_reply — Approve or ignore a pending reply
 
-### Threads — Profile (2)
+### Threads — Profile & Discovery (3)
 - threads_get_profile — Get Threads profile info
 - threads_get_user_threads — List user's threads
+- threads_lookup_profile — Look up a public profile by username (Profile Discovery)
+
+### Threads — Mentions (1)
+- threads_get_mentions — Get posts where the user was @mentioned
+
+### Threads — Locations (2)
+- threads_search_locations — Search for locations to tag, by query or coordinates
+- threads_get_location — Get a location object by ID
+
+### Threads — Tools & Resources (1)
+- threads_get_oembed — Get embed HTML/metadata for a public post
 
 ### Threads — Insights (2)
 - threads_get_post_insights — Post analytics (views, likes, replies, reposts, quotes, clicks)

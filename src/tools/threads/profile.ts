@@ -20,6 +20,23 @@ export function registerThreadsProfileTools(server: McpServer, client: MetaClien
     }
   );
 
+  // ─── threads_lookup_profile ──────────────────────────────────
+  server.tool(
+    "threads_lookup_profile",
+    "Look up a public Threads user's profile by username (Profile Discovery). Requires threads_profile_discovery permission and target must have >=100 followers; with standard access, only @meta, @threads, @instagram, and @facebook are queryable.",
+    {
+      username: z.string().describe("Threads username to look up (exact match, without @)"),
+    },
+    async ({ username }) => {
+      try {
+        const { data, rateLimit } = await client.threads("GET", "/profile_lookup", { username });
+        return { content: [{ type: "text", text: JSON.stringify({ ...data as object, _rateLimit: rateLimit }, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Profile lookup failed: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
+      }
+    }
+  );
+
   // ─── threads_get_user_threads ────────────────────────────────
   server.tool(
     "threads_get_user_threads",

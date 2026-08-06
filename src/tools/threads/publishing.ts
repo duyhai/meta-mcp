@@ -27,12 +27,16 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
       topic_tag: z.string().max(50).optional().describe("Topic tag for the post (1-50 chars, no periods or ampersands)"),
       quote_post_id: z.string().optional().describe("ID of a post to quote"),
       poll_options: z.array(z.string()).min(2).max(4).optional().describe("Poll options (2-4 choices). Creates a poll attachment."),
-      gif_id: z.string().optional().describe("GIF ID from GIPHY or Tenor"),
-      gif_provider: z.enum(["GIPHY", "TENOR"]).optional().describe("GIF provider (GIPHY or TENOR). Tenor sunsets March 31, 2026."),
+      gif_id: z.string().optional().describe("GIF ID from GIPHY (id field from GIPHY's API response). GIPHY is currently the only supported GIF provider (Tenor was sunset March 31, 2026)."),
       alt_text: z.string().max(1000).optional().describe("Alt text for accessibility (max 1000 chars)"),
       is_spoiler: z.boolean().optional().describe("Mark content as spoiler"),
+      is_ghost_post: z.boolean().optional().describe("Create a ghost post (auto-archived after 24h). Text-only; cannot be combined with reply_control targeting a specific post, polls, GIFs, or reply approvals."),
+      enable_reply_approvals: z.boolean().optional().describe("Require replies to be approved before they're published. Not compatible with ghost posts."),
+      location_id: z.string().optional().describe("Location ID to tag (from threads_search_locations)"),
+      crossreshare_to_ig: z.boolean().optional().describe("Also share this post to the user's linked Instagram account as a Story"),
+      crossreshare_to_ig_dark_mode: z.boolean().optional().describe("Cross-share to Instagram Stories in dark mode"),
     },
-    async ({ text, reply_control, link_attachment, topic_tag, quote_post_id, poll_options, gif_id, gif_provider, alt_text, is_spoiler }) => {
+    async ({ text, reply_control, link_attachment, topic_tag, quote_post_id, poll_options, gif_id, alt_text, is_spoiler, is_ghost_post, enable_reply_approvals, location_id, crossreshare_to_ig, crossreshare_to_ig_dark_mode }) => {
       try {
         const params: Record<string, unknown> = { media_type: "TEXT", text };
         if (reply_control) params.reply_control = reply_control;
@@ -42,11 +46,16 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
         if (poll_options) {
           params.poll_attachment = JSON.stringify({ options: poll_options.map(o => ({ option_text: o })) });
         }
-        if (gif_id && gif_provider) {
-          params.gif_attachment = JSON.stringify({ gif_id, provider: gif_provider });
+        if (gif_id) {
+          params.gif_attachment = JSON.stringify({ gif_id, provider: "GIPHY" });
         }
         if (alt_text) params.alt_text = alt_text;
         if (is_spoiler) params.is_spoiler = true;
+        if (is_ghost_post) params.is_ghost_post = true;
+        if (enable_reply_approvals) params.enable_reply_approvals = true;
+        if (location_id) params.location_id = location_id;
+        if (crossreshare_to_ig) params.crossreshare_to_ig = true;
+        if (crossreshare_to_ig_dark_mode) params.crossreshare_to_ig_dark_mode = true;
         const { data: container } = await client.threads("POST", `/${client.threadsUserId}/threads`, params);
         const containerId = (container as { id: string }).id;
         const { data, rateLimit } = await client.threads("POST", `/${client.threadsUserId}/threads_publish`, {
@@ -71,8 +80,12 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
       quote_post_id: z.string().optional().describe("ID of a post to quote"),
       alt_text: z.string().max(1000).optional().describe("Alt text for accessibility (max 1000 chars)"),
       is_spoiler: z.boolean().optional().describe("Mark content as spoiler"),
+      enable_reply_approvals: z.boolean().optional().describe("Require replies to be approved before they're published"),
+      location_id: z.string().optional().describe("Location ID to tag (from threads_search_locations)"),
+      crossreshare_to_ig: z.boolean().optional().describe("Also share this post to the user's linked Instagram account as a Story"),
+      crossreshare_to_ig_dark_mode: z.boolean().optional().describe("Cross-share to Instagram Stories in dark mode"),
     },
-    async ({ image_url, text, reply_control, topic_tag, quote_post_id, alt_text, is_spoiler }) => {
+    async ({ image_url, text, reply_control, topic_tag, quote_post_id, alt_text, is_spoiler, enable_reply_approvals, location_id, crossreshare_to_ig, crossreshare_to_ig_dark_mode }) => {
       try {
         const params: Record<string, unknown> = { media_type: "IMAGE", image_url };
         if (text) params.text = text;
@@ -81,6 +94,10 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
         if (quote_post_id) params.quote_post_id = quote_post_id;
         if (alt_text) params.alt_text = alt_text;
         if (is_spoiler) params.is_spoiler = true;
+        if (enable_reply_approvals) params.enable_reply_approvals = true;
+        if (location_id) params.location_id = location_id;
+        if (crossreshare_to_ig) params.crossreshare_to_ig = true;
+        if (crossreshare_to_ig_dark_mode) params.crossreshare_to_ig_dark_mode = true;
         const { data: container } = await client.threads("POST", `/${client.threadsUserId}/threads`, params);
         const containerId = (container as { id: string }).id;
         const { data, rateLimit } = await client.threads("POST", `/${client.threadsUserId}/threads_publish`, {
@@ -105,8 +122,12 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
       quote_post_id: z.string().optional().describe("ID of a post to quote"),
       alt_text: z.string().max(1000).optional().describe("Alt text for accessibility (max 1000 chars)"),
       is_spoiler: z.boolean().optional().describe("Mark content as spoiler"),
+      enable_reply_approvals: z.boolean().optional().describe("Require replies to be approved before they're published"),
+      location_id: z.string().optional().describe("Location ID to tag (from threads_search_locations)"),
+      crossreshare_to_ig: z.boolean().optional().describe("Also share this post to the user's linked Instagram account as a Story"),
+      crossreshare_to_ig_dark_mode: z.boolean().optional().describe("Cross-share to Instagram Stories in dark mode"),
     },
-    async ({ video_url, text, reply_control, topic_tag, quote_post_id, alt_text, is_spoiler }) => {
+    async ({ video_url, text, reply_control, topic_tag, quote_post_id, alt_text, is_spoiler, enable_reply_approvals, location_id, crossreshare_to_ig, crossreshare_to_ig_dark_mode }) => {
       try {
         const params: Record<string, unknown> = { media_type: "VIDEO", video_url };
         if (text) params.text = text;
@@ -115,6 +136,10 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
         if (quote_post_id) params.quote_post_id = quote_post_id;
         if (alt_text) params.alt_text = alt_text;
         if (is_spoiler) params.is_spoiler = true;
+        if (enable_reply_approvals) params.enable_reply_approvals = true;
+        if (location_id) params.location_id = location_id;
+        if (crossreshare_to_ig) params.crossreshare_to_ig = true;
+        if (crossreshare_to_ig_dark_mode) params.crossreshare_to_ig_dark_mode = true;
         const { data: container } = await client.threads("POST", `/${client.threadsUserId}/threads`, params);
         const containerId = (container as { id: string }).id;
         await waitForThreadsContainer(client, containerId);
@@ -142,8 +167,12 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
       reply_control: z.enum(["everyone", "accounts_you_follow", "mentioned_only", "parent_post_author_only", "followers_only"]).optional().describe("Who can reply"),
       topic_tag: z.string().max(50).optional().describe("Topic tag for the post"),
       quote_post_id: z.string().optional().describe("ID of a post to quote"),
+      enable_reply_approvals: z.boolean().optional().describe("Require replies to be approved before they're published"),
+      location_id: z.string().optional().describe("Location ID to tag (from threads_search_locations)"),
+      crossreshare_to_ig: z.boolean().optional().describe("Also share this post to the user's linked Instagram account as a Story"),
+      crossreshare_to_ig_dark_mode: z.boolean().optional().describe("Cross-share to Instagram Stories in dark mode"),
     },
-    async ({ items, text, reply_control, topic_tag, quote_post_id }) => {
+    async ({ items, text, reply_control, topic_tag, quote_post_id, enable_reply_approvals, location_id, crossreshare_to_ig, crossreshare_to_ig_dark_mode }) => {
       try {
         const childIds: string[] = [];
         for (const item of items) {
@@ -167,6 +196,10 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
         if (reply_control) carouselParams.reply_control = reply_control;
         if (topic_tag) carouselParams.topic_tag = topic_tag;
         if (quote_post_id) carouselParams.quote_post_id = quote_post_id;
+        if (enable_reply_approvals) carouselParams.enable_reply_approvals = true;
+        if (location_id) carouselParams.location_id = location_id;
+        if (crossreshare_to_ig) carouselParams.crossreshare_to_ig = true;
+        if (crossreshare_to_ig_dark_mode) carouselParams.crossreshare_to_ig_dark_mode = true;
         const { data: carousel } = await client.threads("POST", `/${client.threadsUserId}/threads`, carouselParams);
         const carouselId = (carousel as { id: string }).id;
         const { data, rateLimit } = await client.threads("POST", `/${client.threadsUserId}/threads_publish`, {

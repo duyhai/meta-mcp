@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Badge](https://lobehub.com/badge/mcp/mikusnuz-meta-mcp)](https://lobehub.com/discover/mcp/mikusnuz-meta-mcp)
 
-Full-coverage MCP server for **Instagram Graph API** (v25.0), **Threads API**, and **Meta platform** management.
+Full-coverage MCP server for **Instagram Graph API** (v26.0), **Threads API**, and **Meta platform** management.
 
 ## When to Use
 
@@ -25,13 +25,28 @@ Tell your AI assistant things like:
 
 ## Features
 
-- **57 tools** across Instagram (33), Threads (18), and Meta platform (6)
+- **66 tools** across Instagram (33), Threads (27), and Meta platform (6)
 - **Instagram**: Publish photos/videos/reels/stories/carousels with alt text, manage comments, view insights, search hashtags, handle DMs, manage collaboration invites
-- **Threads**: Publish text/images/videos/carousels with polls, GIFs, topic tags, link attachments, alt text, spoiler flags; manage replies; search posts; view insights; delete posts
+- **Threads**: Publish text/images/videos/carousels with polls, GIFs, topic tags, link attachments, alt text, spoiler flags, ghost posts, reply approvals, location tags, and Instagram Stories cross-sharing; manage replies and pending reply approvals; search posts and locations; profile/mentions discovery; oEmbed; view insights; delete posts
 - **Meta**: Token exchange/refresh/debug, webhook management
 - **2 resources**: Instagram profile, Threads profile
 - **2 prompts**: Cross-platform content publishing, analytics report
 - Rate limit tracking via `x-app-usage` header
+
+## What's New in v2.1.0
+
+- **Graph API v26.0**: Upgraded from v25.0 (no deprecated fields/endpoints from the v26.0 changelog were in use)
+- **Tenor removed**: GIPHY is now the only GIF provider (Tenor was sunset March 31, 2026); `gif_provider` param dropped
+- **Threads Ghost Posts**: `is_ghost_post` on `threads_publish_text` (auto-archived after 24h)
+- **Threads Reply Approvals**: `enable_reply_approvals` on publish tools, plus `threads_get_pending_replies` and `threads_manage_pending_reply`
+- **Threads → Instagram Stories cross-share**: `crossreshare_to_ig` / `crossreshare_to_ig_dark_mode` on all publish tools
+- **Threads Location Tagging**: `location_id` on publish tools, plus `threads_search_locations` and `threads_get_location`
+- **Threads Profile Discovery**: `threads_lookup_profile` and `threads_get_profile_posts` for public profiles
+- **Threads Mentions**: `threads_get_mentions`
+- **Threads oEmbed**: `threads_get_oembed` for embedding public posts
+- **Threads Conversations**: `threads_get_conversation` for flattened (nested) reply threads
+- **Fixed `threads_search_posts`**: now calls the correct `/keyword_search` endpoint with the correct `search_mode`/`search_type` parameters (previous version targeted a non-existent endpoint)
+- Post/reply fields expanded with `is_verified`, `profile_picture_url`, `location_id`, `root_post`, `replied_to`, `reply_audience`
 
 ## What's New in v2.0.0
 
@@ -205,44 +220,68 @@ You only need to set the variables for the platforms you use. For example, if yo
 
 | Tool | Description |
 |------|-------------|
-| `threads_publish_text` | Publish a text post (supports polls, GIFs, link attachments, topic tags, quote posts, spoiler flag) |
-| `threads_publish_image` | Publish an image post (supports alt_text, topic tags, spoiler flag) |
-| `threads_publish_video` | Publish a video post (supports alt_text, topic tags, spoiler flag) |
-| `threads_publish_carousel` | Publish a carousel (2-20 items, supports alt_text per item) |
+| `threads_publish_text` | Publish a text post (polls, GIFs, link attachments, topic tags, quote posts, spoiler flag, ghost posts, reply approvals, location tag, IG Stories cross-share) |
+| `threads_publish_image` | Publish an image post (alt_text, topic tags, spoiler flag, reply approvals, location tag, IG Stories cross-share) |
+| `threads_publish_video` | Publish a video post (alt_text, topic tags, spoiler flag, reply approvals, location tag, IG Stories cross-share) |
+| `threads_publish_carousel` | Publish a carousel (2-20 items, alt_text per item, reply approvals, location tag, IG Stories cross-share) |
 | `threads_delete_post` | Delete a post (max 100/day) |
 | `threads_get_container_status` | Check container processing status |
 | `threads_get_publishing_limit` | Check remaining publishing quota (250 posts/day) |
 
-### Threads — Media & Search (3)
+### Threads — Media & Search (4)
 
 | Tool | Description |
 |------|-------------|
-| `threads_get_posts` | List published posts (includes topic_tag, poll, GIF fields) |
+| `threads_get_posts` | List published posts (includes topic_tag, poll, GIF, location, verification fields) |
 | `threads_get_post` | Get post details |
-| `threads_search_posts` | Search public posts by keyword or topic tag |
+| `threads_get_profile_posts` | List a public profile's posts by username (Profile Discovery) |
+| `threads_search_posts` | Search public posts via `/keyword_search` by keyword or topic tag, filterable by media type and author |
 
-### Threads — Replies (4)
+### Threads — Replies (7)
 
 | Tool | Description |
 |------|-------------|
-| `threads_get_replies` | Get replies to a post |
+| `threads_get_replies` | Get top-level replies to a post |
+| `threads_get_conversation` | Get all replies (flattened, including nested) to a post |
 | `threads_reply` | Reply to a post (supports image/video attachments) |
 | `threads_hide_reply` | Hide a reply |
 | `threads_unhide_reply` | Unhide a reply |
+| `threads_get_pending_replies` | Get replies awaiting approval on a post with reply approvals enabled |
+| `threads_manage_pending_reply` | Approve or ignore a pending reply |
 
-### Threads — Profile (2)
+### Threads — Profile & Discovery (3)
 
 | Tool | Description |
 |------|-------------|
 | `threads_get_profile` | Get Threads profile info (includes is_verified) |
 | `threads_get_user_threads` | List user's threads |
+| `threads_lookup_profile` | Look up a public profile by username (Profile Discovery) |
+
+### Threads — Mentions (1)
+
+| Tool | Description |
+|------|-------------|
+| `threads_get_mentions` | Get posts where the user was @mentioned |
+
+### Threads — Locations (2)
+
+| Tool | Description |
+|------|-------------|
+| `threads_search_locations` | Search for locations to tag, by query or coordinates |
+| `threads_get_location` | Get a location object by ID |
+
+### Threads — Tools & Resources (1)
+
+| Tool | Description |
+|------|-------------|
+| `threads_get_oembed` | Get embed HTML/metadata for a public post |
 
 ### Threads — Insights (2)
 
 | Tool | Description |
 |------|-------------|
 | `threads_get_post_insights` | Get post analytics (views, likes, replies, reposts, quotes, clicks) |
-| `threads_get_user_insights` | Get account-level analytics |
+| `threads_get_user_insights` | Get account-level analytics (also available to Threads profiles without a linked Instagram account) |
 
 ## Resources
 
@@ -283,7 +322,7 @@ Your **`META_APP_ID`** and **`META_APP_SECRET`** are in **App Settings → Basic
    - Click **"Generate Access Token"** and authorize
 4. The generated token is short-lived (~1 hour). Exchange it for a long-lived token (~60 days):
    ```
-   GET https://graph.facebook.com/v25.0/oauth/access_token
+   GET https://graph.facebook.com/v26.0/oauth/access_token
      ?grant_type=fb_exchange_token
      &client_id=YOUR_APP_ID
      &client_secret=YOUR_APP_SECRET
@@ -292,11 +331,11 @@ Your **`META_APP_ID`** and **`META_APP_SECRET`** are in **App Settings → Basic
    Or use the `meta_exchange_token` tool after setup.
 5. **Get your Instagram User ID** — call this with your token:
    ```
-   GET https://graph.facebook.com/v25.0/me/accounts?access_token=YOUR_TOKEN
+   GET https://graph.facebook.com/v26.0/me/accounts?access_token=YOUR_TOKEN
    ```
    This returns your Facebook Pages. For each page, get the linked Instagram account:
    ```
-   GET https://graph.facebook.com/v25.0/{page-id}?fields=instagram_business_account&access_token=YOUR_TOKEN
+   GET https://graph.facebook.com/v26.0/{page-id}?fields=instagram_business_account&access_token=YOUR_TOKEN
    ```
    The `instagram_business_account.id` is your **`INSTAGRAM_USER_ID`** (a numeric ID like `17841400123456789`).
 

@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Badge](https://lobehub.com/badge/mcp/mikusnuz-meta-mcp)](https://lobehub.com/discover/mcp/mikusnuz-meta-mcp)
 
-**Instagram Graph API** (v25.0), **Threads API**, **Meta 플랫폼** 관리를 위한 완전한 MCP 서버입니다.
+**Instagram Graph API** (v26.0), **Threads API**, **Meta 플랫폼** 관리를 위한 완전한 MCP 서버입니다.
 
 ## 이런 경우에 사용하세요
 
@@ -25,13 +25,28 @@ AI 어시스턴트에 이렇게 말해보세요:
 
 ## 주요 기능
 
-- **57개 도구**: Instagram(33), Threads(18), Meta 플랫폼(6)
+- **66개 도구**: Instagram(33), Threads(27), Meta 플랫폼(6)
 - **Instagram**: 사진/영상/릴스/스토리/캐러셀 게시(alt text 지원), 댓글 관리, 인사이트 조회, 해시태그 검색, DM 관리, 협업 초대 관리
-- **Threads**: 텍스트/이미지/영상/캐러셀 게시(투표, GIF, 토픽 태그, 링크 첨부, alt text, 스포일러 지원), 답글 관리, 게시물 검색, 인사이트 조회, 게시물 삭제
+- **Threads**: 텍스트/이미지/영상/캐러셀 게시(투표, GIF, 토픽 태그, 링크 첨부, alt text, 스포일러, 고스트 게시물, 답글 승인, 위치 태그, 인스타그램 스토리 크로스 공유 지원), 답글 및 대기 중인 답글 승인 관리, 게시물/위치 검색, 프로필/멘션 조회, oEmbed, 인사이트 조회, 게시물 삭제
 - **Meta**: token 교환/갱신/디버그, 웹훅 관리
 - **2개 리소스**: Instagram 프로필, Threads 프로필
 - **2개 프롬프트**: 크로스 플랫폼 콘텐츠 게시, 분석 리포트
 - `x-app-usage` 헤더를 통한 속도 제한 추적
+
+## v2.1.0 변경사항
+
+- **Graph API v26.0**: v25.0에서 업그레이드 (v26.0 변경사항의 폐기 항목/엔드포인트는 사용하지 않고 있음을 확인)
+- **Tenor 제거**: GIPHY가 유일한 GIF 제공자가 됨 (Tenor는 2026년 3월 31일 서비스 종료), `gif_provider` 파라미터 삭제
+- **Threads 고스트 게시물**: `threads_publish_text`에 `is_ghost_post` 추가 (24시간 후 자동 보관)
+- **Threads 답글 승인**: 게시 도구에 `enable_reply_approvals` 추가, `threads_get_pending_replies` / `threads_manage_pending_reply` 신규
+- **Threads → 인스타그램 스토리 크로스 공유**: 모든 게시 도구에 `crossreshare_to_ig` / `crossreshare_to_ig_dark_mode` 추가
+- **Threads 위치 태그**: 게시 도구에 `location_id` 추가, `threads_search_locations` / `threads_get_location` 신규
+- **Threads 프로필 조회**: `threads_lookup_profile`, `threads_get_profile_posts` 신규
+- **Threads 멘션**: `threads_get_mentions` 신규
+- **Threads oEmbed**: `threads_get_oembed` 신규
+- **Threads 대화 조회**: `threads_get_conversation` (중첩 답글까지 평탄화하여 조회) 신규
+- **`threads_search_posts` 버그 수정**: 존재하지 않는 엔드포인트 대신 올바른 `/keyword_search` 엔드포인트와 정확한 `search_mode`/`search_type` 파라미터 사용
+- 게시물/답글 필드에 `is_verified`, `profile_picture_url`, `location_id`, `root_post`, `replied_to`, `reply_audience` 추가
 
 ## v2.0.0 변경사항
 
@@ -205,44 +220,68 @@ npm run build
 
 | 도구 | 설명 |
 |------|------|
-| `threads_publish_text` | 텍스트 게시물 게시 (투표, GIF, 링크 첨부, 토픽 태그, 인용 게시물, 스포일러 지원) |
-| `threads_publish_image` | 이미지 게시물 게시 (alt_text, 토픽 태그, 스포일러 지원) |
-| `threads_publish_video` | 영상 게시물 게시 (alt_text, 토픽 태그, 스포일러 지원) |
-| `threads_publish_carousel` | 캐러셀 게시 (2~20개 항목, 항목별 alt_text 지원) |
+| `threads_publish_text` | 텍스트 게시물 게시 (투표, GIF, 링크 첨부, 토픽 태그, 인용 게시물, 스포일러, 고스트 게시물, 답글 승인, 위치 태그, 인스타그램 스토리 크로스 공유 지원) |
+| `threads_publish_image` | 이미지 게시물 게시 (alt_text, 토픽 태그, 스포일러, 답글 승인, 위치 태그, 인스타그램 스토리 크로스 공유 지원) |
+| `threads_publish_video` | 영상 게시물 게시 (alt_text, 토픽 태그, 스포일러, 답글 승인, 위치 태그, 인스타그램 스토리 크로스 공유 지원) |
+| `threads_publish_carousel` | 캐러셀 게시 (2~20개 항목, 항목별 alt_text, 답글 승인, 위치 태그, 인스타그램 스토리 크로스 공유 지원) |
 | `threads_delete_post` | 게시물 삭제 (하루 최대 100개) |
 | `threads_get_container_status` | 컨테이너 처리 상태 확인 |
 | `threads_get_publishing_limit` | 남은 게시 할당량 확인 (하루 250개) |
 
-### Threads — 미디어 & 검색 (3)
+### Threads — 미디어 & 검색 (4)
 
 | 도구 | 설명 |
 |------|------|
-| `threads_get_posts` | 게시된 게시물 목록 조회 (토픽 태그, 투표, GIF 필드 포함) |
+| `threads_get_posts` | 게시된 게시물 목록 조회 (토픽 태그, 투표, GIF, 위치, 인증 필드 포함) |
 | `threads_get_post` | 게시물 상세 정보 조회 |
-| `threads_search_posts` | 키워드 또는 토픽 태그로 공개 게시물 검색 |
+| `threads_get_profile_posts` | 사용자명으로 공개 프로필의 게시물 목록 조회 (프로필 조회) |
+| `threads_search_posts` | `/keyword_search` 엔드포인트로 키워드 또는 토픽 태그로 공개 게시물 검색 (미디어 유형, 작성자 필터 지원) |
 
-### Threads — 답글 (4)
+### Threads — 답글 (7)
 
 | 도구 | 설명 |
 |------|------|
-| `threads_get_replies` | 게시물의 답글 조회 |
+| `threads_get_replies` | 게시물의 최상위 답글 조회 |
+| `threads_get_conversation` | 게시물의 모든 답글(중첩 포함) 평탄화하여 조회 |
 | `threads_reply` | 게시물에 답글 작성 (이미지/영상 첨부 지원) |
 | `threads_hide_reply` | 답글 숨기기 |
 | `threads_unhide_reply` | 답글 숨기기 해제 |
+| `threads_get_pending_replies` | 답글 승인이 설정된 게시물의 승인 대기 답글 조회 |
+| `threads_manage_pending_reply` | 대기 중인 답글 승인 또는 무시 |
 
-### Threads — 프로필 (2)
+### Threads — 프로필 & 조회 (3)
 
 | 도구 | 설명 |
 |------|------|
 | `threads_get_profile` | Threads 프로필 정보 조회 (is_verified 포함) |
 | `threads_get_user_threads` | 사용자의 스레드 목록 조회 |
+| `threads_lookup_profile` | 사용자명으로 공개 프로필 조회 (프로필 조회) |
+
+### Threads — 멘션 (1)
+
+| 도구 | 설명 |
+|------|------|
+| `threads_get_mentions` | 사용자가 @멘션된 게시물 조회 |
+
+### Threads — 위치 (2)
+
+| 도구 | 설명 |
+|------|------|
+| `threads_search_locations` | 검색어 또는 좌표로 태그할 위치 검색 |
+| `threads_get_location` | ID로 위치 객체 조회 |
+
+### Threads — 도구 & 리소스 (1)
+
+| 도구 | 설명 |
+|------|------|
+| `threads_get_oembed` | 공개 게시물의 임베드 HTML/메타데이터 조회 |
 
 ### Threads — 인사이트 (2)
 
 | 도구 | 설명 |
 |------|------|
 | `threads_get_post_insights` | 게시물 분석 데이터 조회 (views, likes, replies, reposts, quotes, clicks) |
-| `threads_get_user_insights` | 계정 수준 분석 데이터 조회 |
+| `threads_get_user_insights` | 계정 수준 분석 데이터 조회 (인스타그램 미연동 Threads 프로필도 이용 가능) |
 
 ## 리소스
 
@@ -283,7 +322,7 @@ npm run build
    - **"Generate Access Token"** 클릭 후 인가
 4. 생성된 토큰은 단기 토큰(~1시간)입니다. 장기 토큰(~60일)으로 교환:
    ```
-   GET https://graph.facebook.com/v25.0/oauth/access_token
+   GET https://graph.facebook.com/v26.0/oauth/access_token
      ?grant_type=fb_exchange_token
      &client_id=YOUR_APP_ID
      &client_secret=YOUR_APP_SECRET
@@ -292,11 +331,11 @@ npm run build
    또는 설정 후 `meta_exchange_token` 도구를 사용할 수 있습니다.
 5. **Instagram User ID 조회** — 토큰으로 다음을 호출합니다:
    ```
-   GET https://graph.facebook.com/v25.0/me/accounts?access_token=YOUR_TOKEN
+   GET https://graph.facebook.com/v26.0/me/accounts?access_token=YOUR_TOKEN
    ```
    Facebook 페이지 목록이 반환됩니다. 각 페이지에서 연결된 Instagram 계정을 조회합니다:
    ```
-   GET https://graph.facebook.com/v25.0/{page-id}?fields=instagram_business_account&access_token=YOUR_TOKEN
+   GET https://graph.facebook.com/v26.0/{page-id}?fields=instagram_business_account&access_token=YOUR_TOKEN
    ```
    `instagram_business_account.id`가 **`INSTAGRAM_USER_ID`**입니다 (숫자 ID, 예: `17841400123456789`).
 

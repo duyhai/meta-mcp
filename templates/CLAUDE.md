@@ -52,24 +52,33 @@ All tools are prefixed with `mcp__meta__` in Claude Code.
 - `ig_send_message` — Send a DM
 
 ### Threads — Publishing
-- `threads_publish_text` — Text post (polls, GIFs, link attachments, topic tags, quotes, spoiler flag)
-- `threads_publish_image` / `threads_publish_video` — Media posts (alt_text, topic tags)
-- `threads_publish_carousel` — Carousel (2-20 items)
+- `threads_publish_text` — Text post (polls, GIFs, link attachments, topic tags, quotes, spoiler flag, ghost posts, reply approvals, location tag, IG Stories cross-share)
+- `threads_publish_image` / `threads_publish_video` — Media posts (alt_text, topic tags, reply approvals, location tag, IG Stories cross-share)
+- `threads_publish_carousel` — Carousel (2-20 items, reply approvals, location tag, IG Stories cross-share)
 - `threads_delete_post` — Delete post (max 100/day)
 - `threads_get_container_status` — Check processing status
 - `threads_get_publishing_limit` — Check remaining quota (250/day)
 
 ### Threads — Media & Search
 - `threads_get_posts` / `threads_get_post` — List/get posts
-- `threads_search_posts` — Search public posts by keyword or topic tag
+- `threads_get_profile_posts` — List a public profile's posts by username (Profile Discovery)
+- `threads_search_posts` — Search `/keyword_search` by keyword or topic tag, filter by media type/author
 
 ### Threads — Replies
-- `threads_get_replies` — Get replies
+- `threads_get_replies` — Get top-level replies
+- `threads_get_conversation` — Get all replies to a post, flattened (including nested)
 - `threads_reply` — Reply (supports image/video)
 - `threads_hide_reply` / `threads_unhide_reply` — Moderate replies
+- `threads_get_pending_replies` / `threads_manage_pending_reply` — Reply approval queue (for posts with `enable_reply_approvals`)
 
-### Threads — Profile & Insights
+### Threads — Profile, Mentions, Locations & oEmbed
 - `threads_get_profile` / `threads_get_user_threads` — Profile info
+- `threads_lookup_profile` — Look up a public profile by username (Profile Discovery)
+- `threads_get_mentions` — Posts where the user was @mentioned
+- `threads_search_locations` / `threads_get_location` — Search and retrieve locations to tag
+- `threads_get_oembed` — Get embed HTML/metadata for a public post
+
+### Threads — Insights
 - `threads_get_post_insights` — Post analytics
 - `threads_get_user_insights` — Account analytics
 

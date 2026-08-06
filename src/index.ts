@@ -23,6 +23,9 @@ import { registerThreadsMediaTools } from "./tools/threads/media.js";
 import { registerThreadsReplyTools } from "./tools/threads/replies.js";
 import { registerThreadsProfileTools } from "./tools/threads/profile.js";
 import { registerThreadsInsightTools } from "./tools/threads/insights.js";
+import { registerThreadsMentionTools } from "./tools/threads/mentions.js";
+import { registerThreadsLocationTools } from "./tools/threads/locations.js";
+import { registerThreadsOembedTools } from "./tools/threads/oembed.js";
 
 // Resources & Prompts
 import { registerInstagramResources } from "./resources/instagram.js";
@@ -31,7 +34,7 @@ import { registerPrompts } from "./prompts/index.js";
 
 const server = new McpServer({
   name: "meta-mcp",
-  version: "2.0.0",
+  version: "2.1.0",
 });
 
 const config = loadConfig();
@@ -51,6 +54,9 @@ registerThreadsMediaTools(server, client);
 registerThreadsReplyTools(server, client);
 registerThreadsProfileTools(server, client);
 registerThreadsInsightTools(server, client);
+registerThreadsMentionTools(server, client);
+registerThreadsLocationTools(server, client);
+registerThreadsOembedTools(server, client);
 
 // Register resources
 registerInstagramResources(server, client);
@@ -74,7 +80,7 @@ main().catch((err) => {
 export function createSandboxServer() {
   const sandbox = new McpServer({
     name: "meta-mcp",
-    version: "2.0.0",
+    version: "2.1.0",
   });
 
   const mockConfig: MetaConfig = {
@@ -100,6 +106,9 @@ export function createSandboxServer() {
   registerThreadsReplyTools(sandbox, mockClient);
   registerThreadsProfileTools(sandbox, mockClient);
   registerThreadsInsightTools(sandbox, mockClient);
+  registerThreadsMentionTools(sandbox, mockClient);
+  registerThreadsLocationTools(sandbox, mockClient);
+  registerThreadsOembedTools(sandbox, mockClient);
   registerInstagramResources(sandbox, mockClient);
   registerThreadsResources(sandbox, mockClient);
   registerPrompts(sandbox);
