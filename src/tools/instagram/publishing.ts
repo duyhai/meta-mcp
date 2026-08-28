@@ -1,19 +1,28 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MetaClient } from "../../services/meta-client.js";
+import { buildInstagramStoryParams } from "../../services/api-contracts.js";
+import { waitForContainerStatus } from "../../services/container-polling.js";
 
 /** Poll container status until FINISHED or error (video upload) */
-async function waitForContainer(client: MetaClient, containerId: string, maxWait = 30): Promise<void> {
-  const interval = 2000;
-  const maxAttempts = Math.ceil((maxWait * 1000) / interval);
-  for (let i = 0; i < maxAttempts; i++) {
-    const { data } = await client.ig("GET", `/${containerId}`, { fields: "status_code" });
-    const status = (data as { status_code?: string }).status_code;
-    if (status === "FINISHED") return;
-    if (status === "ERROR") throw new Error("Container processing failed (ERROR status)");
-    await new Promise((r) => setTimeout(r, interval));
-  }
-  throw new Error(`Container processing timed out after ${maxWait}s`);
+async function waitForContainer(
+  client: MetaClient,
+  containerId: string,
+  maxWaitSeconds = 300
+): Promise<void> {
+  await waitForContainerStatus(
+    async () => {
+      const { data } = await client.ig("GET", `/${containerId}`, {
+        fields: "status_code",
+      });
+      return (data as { status_code?: string }).status_code;
+    },
+    {
+      intervalMs: 60_000,
+      maxWaitMs: maxWaitSeconds * 1000,
+      label: "Instagram container",
+    }
+  );
 }
 
 export function registerIgPublishingTools(server: McpServer, client: MetaClient): void {
@@ -174,13 +183,7 @@ export function registerIgPublishingTools(server: McpServer, client: MetaClient)
     },
     async ({ media_type, media_url }) => {
       try {
-        const params: Record<string, unknown> = {};
-        if (media_type === "IMAGE") {
-          params.image_url = media_url;
-        } else {
-          params.video_url = media_url;
-          params.media_type = "VIDEO";
-        }
+        const params = buildInstagramStoryParams(media_type, media_url);
         const { data: container } = await client.ig("POST", `/${client.igUserId}/media`, params);
         const containerId = (container as { id: string }).id;
         if (media_type === "VIDEO") {

@@ -1,8 +1,11 @@
 import { MetaConfig } from "../config.js";
 import { RateLimit } from "../types.js";
-
-const IG_BASE = "https://graph.facebook.com/v26.0";
-const THREADS_BASE = "https://graph.threads.net/v1.0";
+import {
+  buildTokenRefreshRequest,
+  INSTAGRAM_GRAPH_BASE,
+  MetaTokenPlatform,
+  THREADS_GRAPH_BASE,
+} from "./api-contracts.js";
 
 interface ClientResponse {
   data: unknown;
@@ -81,7 +84,32 @@ export class MetaClient {
     if (!this.config.instagramAccessToken) {
       throw new Error("INSTAGRAM_ACCESS_TOKEN is not configured.");
     }
-    return this.request(IG_BASE, this.config.instagramAccessToken, method, path, params);
+    return this.request(
+      INSTAGRAM_GRAPH_BASE,
+      this.config.instagramAccessToken,
+      method,
+      path,
+      params
+    );
+  }
+
+  async igMessaging(
+    method: string,
+    path: string,
+    params?: Record<string, unknown>
+  ): Promise<ClientResponse> {
+    if (!this.config.instagramMessagingAccessToken) {
+      throw new Error(
+        "INSTAGRAM_MESSAGING_ACCESS_TOKEN is not configured. Use a Page access token for Instagram Messaging with Facebook Login."
+      );
+    }
+    return this.request(
+      INSTAGRAM_GRAPH_BASE,
+      this.config.instagramMessagingAccessToken,
+      method,
+      path,
+      params
+    );
   }
 
   async threads(
@@ -92,7 +120,13 @@ export class MetaClient {
     if (!this.config.threadsAccessToken) {
       throw new Error("THREADS_ACCESS_TOKEN is not configured.");
     }
-    return this.request(THREADS_BASE, this.config.threadsAccessToken, method, path, params);
+    return this.request(
+      THREADS_GRAPH_BASE,
+      this.config.threadsAccessToken,
+      method,
+      path,
+      params
+    );
   }
 
   async meta(
@@ -104,7 +138,7 @@ export class MetaClient {
       throw new Error("META_APP_ID and META_APP_SECRET are required.");
     }
     const appToken = `${this.config.appId}|${this.config.appSecret}`;
-    return this.request(IG_BASE, appToken, method, path, params);
+    return this.request(INSTAGRAM_GRAPH_BASE, appToken, method, path, params);
   }
 
   /** Exchange short-lived token for long-lived token */
@@ -112,19 +146,32 @@ export class MetaClient {
     if (!this.config.appId || !this.config.appSecret) {
       throw new Error("META_APP_ID and META_APP_SECRET are required for token exchange.");
     }
-    return this.request(IG_BASE, shortToken, "GET", "/oauth/access_token", {
-      grant_type: "fb_exchange_token",
-      client_id: this.config.appId,
-      client_secret: this.config.appSecret,
-      fb_exchange_token: shortToken,
-    });
+    return this.request(
+      INSTAGRAM_GRAPH_BASE,
+      shortToken,
+      "GET",
+      "/oauth/access_token",
+      {
+        grant_type: "fb_exchange_token",
+        client_id: this.config.appId,
+        client_secret: this.config.appSecret,
+        fb_exchange_token: shortToken,
+      }
+    );
   }
 
-  /** Refresh a long-lived token */
-  async refreshToken(longToken: string): Promise<ClientResponse> {
-    return this.request(IG_BASE, longToken, "GET", "/oauth/access_token", {
-      grant_type: "fb_exchange_token",
-    });
+  /** Extend an Instagram/Facebook token or refresh a Threads long-lived token. */
+  async refreshToken(
+    longToken: string,
+    platform: MetaTokenPlatform
+  ): Promise<ClientResponse> {
+    const spec = buildTokenRefreshRequest(
+      platform,
+      longToken,
+      this.config.appId,
+      this.config.appSecret
+    );
+    return this.request(spec.baseUrl, spec.token, "GET", spec.path, spec.params);
   }
 
   /** Debug a token */
@@ -133,7 +180,7 @@ export class MetaClient {
       throw new Error("META_APP_ID and META_APP_SECRET are required for token debug.");
     }
     const appToken = `${this.config.appId}|${this.config.appSecret}`;
-    return this.request(IG_BASE, appToken, "GET", "/debug_token", {
+    return this.request(INSTAGRAM_GRAPH_BASE, appToken, "GET", "/debug_token", {
       input_token: inputToken,
     });
   }
@@ -143,6 +190,15 @@ export class MetaClient {
       throw new Error("INSTAGRAM_USER_ID is not configured.");
     }
     return this.config.instagramUserId;
+  }
+
+  get instagramPageId(): string {
+    if (!this.config.instagramPageId) {
+      throw new Error(
+        "INSTAGRAM_PAGE_ID is not configured. Instagram Messaging with Facebook Login uses the linked Facebook Page ID."
+      );
+    }
+    return this.config.instagramPageId;
   }
 
   get threadsUserId(): string {

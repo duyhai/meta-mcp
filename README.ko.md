@@ -88,6 +88,8 @@ AI 어시스턴트에 이렇게 말해보세요:
       "env": {
         "INSTAGRAM_ACCESS_TOKEN": "your_ig_token",
         "INSTAGRAM_USER_ID": "your_ig_user_id",
+        "INSTAGRAM_MESSAGING_ACCESS_TOKEN": "your_page_access_token",
+        "INSTAGRAM_PAGE_ID": "your_linked_page_id",
         "THREADS_ACCESS_TOKEN": "your_threads_token",
         "THREADS_USER_ID": "your_threads_user_id"
       }
@@ -114,6 +116,8 @@ npm run build
       "env": {
         "INSTAGRAM_ACCESS_TOKEN": "your_ig_token",
         "INSTAGRAM_USER_ID": "your_ig_user_id",
+        "INSTAGRAM_MESSAGING_ACCESS_TOKEN": "your_page_access_token",
+        "INSTAGRAM_PAGE_ID": "your_linked_page_id",
         "THREADS_ACCESS_TOKEN": "your_threads_token",
         "THREADS_USER_ID": "your_threads_user_id"
       }
@@ -128,6 +132,8 @@ npm run build
 |------|-----------|------|
 | `INSTAGRAM_ACCESS_TOKEN` | Instagram 사용 시 | Instagram Graph API access token |
 | `INSTAGRAM_USER_ID` | Instagram 사용 시 | Instagram 비즈니스/크리에이터 계정 ID |
+| `INSTAGRAM_MESSAGING_ACCESS_TOKEN` | Instagram DM 사용 시 | Facebook Login 기반 Instagram Messaging용 Page access token |
+| `INSTAGRAM_PAGE_ID` | Instagram DM 사용 시 | Instagram 프로페셔널 계정과 연결된 Facebook Page ID |
 | `THREADS_ACCESS_TOKEN` | Threads 사용 시 | Threads API access token |
 | `THREADS_USER_ID` | Threads 사용 시 | Threads 사용자 ID |
 | `META_APP_ID` | token/웹훅 도구 사용 시 | Meta 앱 ID |
@@ -142,7 +148,7 @@ npm run build
 | 도구 | 설명 |
 |------|------|
 | `meta_exchange_token` | 단기 token을 장기 token으로 교환 (~60일) |
-| `meta_refresh_token` | 만료 전 장기 token 갱신 |
+| `meta_refresh_token` | `platform`에 따라 Instagram/Facebook token 연장 또는 Threads token 갱신 |
 | `meta_debug_token` | token 유효성, 만료일, 권한 범위 확인 |
 | `meta_get_app_info` | Meta 앱 정보 조회 |
 | `meta_subscribe_webhook` | 웹훅 알림 구독 |
@@ -318,7 +324,7 @@ npm run build
 2. **"Instagram Graph API" → "설정"**에서 Facebook 페이지를 통해 Instagram 비즈니스 계정 연결
 3. [Graph API Explorer](https://developers.facebook.com/tools/explorer/) 열기
    - 앱 선택
-   - 권한 추가: `instagram_basic`, `instagram_content_publish`, `instagram_manage_comments`, `instagram_manage_insights`, `instagram_manage_contents`, `pages_show_list`, `pages_read_engagement`
+   - 권한 추가: `instagram_basic`, `instagram_content_publish`, `instagram_manage_comments`, `instagram_manage_insights`, `instagram_manage_contents`, `instagram_manage_messages`, `pages_show_list`, `pages_read_engagement`, `pages_manage_metadata`
    - **"Generate Access Token"** 클릭 후 인가
 4. 생성된 토큰은 단기 토큰(~1시간)입니다. 장기 토큰(~60일)으로 교환:
    ```
@@ -331,13 +337,16 @@ npm run build
    또는 설정 후 `meta_exchange_token` 도구를 사용할 수 있습니다.
 5. **Instagram User ID 조회** — 토큰으로 다음을 호출합니다:
    ```
-   GET https://graph.facebook.com/v26.0/me/accounts?access_token=YOUR_TOKEN
+   GET https://graph.facebook.com/v26.0/me/accounts?fields=id,name,access_token&access_token=YOUR_TOKEN
    ```
    Facebook 페이지 목록이 반환됩니다. 각 페이지에서 연결된 Instagram 계정을 조회합니다:
    ```
    GET https://graph.facebook.com/v26.0/{page-id}?fields=instagram_business_account&access_token=YOUR_TOKEN
    ```
    `instagram_business_account.id`가 **`INSTAGRAM_USER_ID`**입니다 (숫자 ID, 예: `17841400123456789`).
+   DM 도구에는 같은 Page의 `id`를 `INSTAGRAM_PAGE_ID`로, `access_token`을
+   `INSTAGRAM_MESSAGING_ACCESS_TOKEN`으로 설정하세요. IG User ID나 사용자 token으로
+   대체하면 안 됩니다.
 
 ### 3단계: Threads 설정
 
@@ -352,7 +361,7 @@ npm run build
    https://threads.net/oauth/authorize
      ?client_id=YOUR_APP_ID
      &redirect_uri=YOUR_REDIRECT_URI
-     &scope=threads_basic,threads_content_publish,threads_manage_insights,threads_manage_replies,threads_read_replies
+     &scope=threads_basic,threads_content_publish,threads_manage_insights,threads_manage_replies,threads_read_replies,threads_keyword_search,threads_manage_mentions,threads_delete,threads_location_tagging,threads_profile_discovery
      &response_type=code
    ```
    - 로컬 테스트의 경우 redirect URI로 `https://localhost/` 사용 (App Settings → Threads API → Redirect URIs에 설정)
@@ -388,6 +397,8 @@ npm run build
 # Instagram (비즈니스/크리에이터 계정 필요)
 INSTAGRAM_ACCESS_TOKEN=EAAxxxxxxx...     # 2단계에서 발급받은 장기 토큰
 INSTAGRAM_USER_ID=17841400123456789      # 2단계 5번에서 조회한 숫자 ID
+INSTAGRAM_MESSAGING_ACCESS_TOKEN=EAA...  # 2단계 5번의 Page token (DM 도구 전용)
+INSTAGRAM_PAGE_ID=123456789012345        # 연결된 Facebook Page ID (DM 도구 전용)
 
 # Threads (모든 계정 사용 가능)
 THREADS_ACCESS_TOKEN=THQWxxxxxxx...      # 3단계에서 발급받은 장기 토큰
@@ -402,8 +413,8 @@ META_APP_SECRET=abcdef0123456789abcdef   # App Settings → Basic에서 확인
 
 Access token은 약 60일 후 만료됩니다. 만료 전에 갱신하세요:
 
-- **Instagram**: 현재 유효한 토큰으로 `meta_exchange_token` 사용
-- **Threads**: `meta_refresh_token` 사용 또는 다음 호출:
+- **Instagram**: `platform=instagram`으로 `meta_refresh_token` 사용 (`META_APP_ID`, `META_APP_SECRET` 필요)
+- **Threads**: `platform=threads`로 `meta_refresh_token` 사용 또는 다음 호출:
   ```
   GET https://graph.threads.net/refresh_access_token
     ?grant_type=th_refresh_token

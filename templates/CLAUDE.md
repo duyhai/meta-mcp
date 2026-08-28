@@ -8,7 +8,7 @@ All tools are prefixed with `mcp__meta__` in Claude Code.
 
 ### Meta Platform
 - `meta_exchange_token` — Exchange short-lived token for long-lived (~60 days)
-- `meta_refresh_token` — Refresh token before expiration
+- `meta_refresh_token` — Extend an Instagram/Facebook token or refresh a Threads token (`platform` selects the flow)
 - `meta_debug_token` — Inspect token validity and scopes
 - `meta_get_app_info` — Get Meta App information
 - `meta_subscribe_webhook` / `meta_get_webhook_subscriptions` — Webhook management
@@ -50,6 +50,8 @@ All tools are prefixed with `mcp__meta__` in Claude Code.
 ### Instagram — Messaging
 - `ig_get_conversations` / `ig_get_messages` / `ig_get_message` — Read DMs
 - `ig_send_message` — Send a DM
+
+DM tools using Facebook Login require `INSTAGRAM_MESSAGING_ACCESS_TOKEN` (the linked Page access token) and `INSTAGRAM_PAGE_ID` in addition to the Instagram configuration.
 
 ### Threads — Publishing
 - `threads_publish_text` — Text post (polls, GIFs, link attachments, topic tags, quotes, spoiler flag, ghost posts, reply approvals, location tag, IG Stories cross-share)
@@ -102,5 +104,5 @@ Use the meta MCP tools when the task involves:
 - Only set env vars for the platforms you actually use.
 - Media publishing is async: use `ig_get_container_status` or `threads_get_container_status` to check processing before assuming success.
 - Threads has a 250 posts/day limit — check with `threads_get_publishing_limit` before bulk operations.
-- Access tokens expire after ~60 days. Use `meta_debug_token` to check and `meta_exchange_token` or `meta_refresh_token` to renew.
+- Access tokens expire after ~60 days. Use `meta_debug_token` to check and `meta_refresh_token` with the correct `platform` to renew.
 - Use the `content_publish` prompt for cross-platform posting workflows.

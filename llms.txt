@@ -12,6 +12,8 @@
 
 - `INSTAGRAM_ACCESS_TOKEN` (for Instagram) — Instagram Graph API access token
 - `INSTAGRAM_USER_ID` (for Instagram) — Instagram Business/Creator account ID
+- `INSTAGRAM_MESSAGING_ACCESS_TOKEN` (for Instagram DMs with Facebook Login) — linked Page access token
+- `INSTAGRAM_PAGE_ID` (for Instagram DMs with Facebook Login) — linked Facebook Page ID
 - `THREADS_ACCESS_TOKEN` (for Threads) — Threads API access token
 - `THREADS_USER_ID` (for Threads) — Threads user ID
 - `META_APP_ID` (for token/webhook tools) — Meta App ID
@@ -30,6 +32,8 @@ Only set variables for the platforms you use.
       "env": {
         "INSTAGRAM_ACCESS_TOKEN": "your_ig_token",
         "INSTAGRAM_USER_ID": "your_ig_user_id",
+        "INSTAGRAM_MESSAGING_ACCESS_TOKEN": "your_page_token",
+        "INSTAGRAM_PAGE_ID": "your_linked_page_id",
         "THREADS_ACCESS_TOKEN": "your_threads_token",
         "THREADS_USER_ID": "your_threads_user_id"
       }
@@ -48,7 +52,7 @@ Only set variables for the platforms you use.
 
 ### Meta Platform (6)
 - meta_exchange_token — Exchange short-lived token for long-lived (~60 days)
-- meta_refresh_token — Refresh a long-lived token before expiration
+- meta_refresh_token — Extend an Instagram/Facebook token or refresh a Threads token (select with `platform`)
 - meta_debug_token — Inspect token validity, expiration, and scopes
 - meta_get_app_info — Get Meta App information
 - meta_subscribe_webhook — Subscribe to webhook notifications

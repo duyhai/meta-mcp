@@ -23,13 +23,20 @@ export function registerMetaAuthTools(server: McpServer, client: MetaClient): vo
   // ─── meta_refresh_token ──────────────────────────────────────
   server.tool(
     "meta_refresh_token",
-    "Refresh a long-lived token before it expires. Returns a new long-lived token.",
+    "Extend an Instagram/Facebook user token through the token-exchange flow, or refresh a Threads long-lived token through the Threads refresh endpoint.",
     {
       long_lived_token: z.string().describe("Current long-lived access token to refresh"),
+      platform: z
+        .enum(["instagram", "threads"])
+        .default("instagram")
+        .describe("Token platform. Defaults to instagram for backward compatibility."),
     },
-    async ({ long_lived_token }) => {
+    async ({ long_lived_token, platform }) => {
       try {
-        const { data, rateLimit } = await client.refreshToken(long_lived_token);
+        const { data, rateLimit } = await client.refreshToken(
+          long_lived_token,
+          platform
+        );
         return { content: [{ type: "text", text: JSON.stringify({ ...data as object, _rateLimit: rateLimit }, null, 2) }] };
       } catch (error) {
         return { content: [{ type: "text", text: `Token refresh failed: ${error instanceof Error ? error.message : String(error)}` }], isError: true };

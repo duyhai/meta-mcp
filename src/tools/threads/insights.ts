@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MetaClient } from "../../services/meta-client.js";
+import { buildThreadsUserInsightParams } from "../../services/api-contracts.js";
 
 export function registerThreadsInsightTools(server: McpServer, client: MetaClient): void {
   // ─── threads_get_post_insights ───────────────────────────────
@@ -30,12 +31,16 @@ export function registerThreadsInsightTools(server: McpServer, client: MetaClien
       metric: z.string().describe("Comma-separated metrics: views,likes,replies,reposts,quotes,followers_count,follower_demographics"),
       since: z.string().optional().describe("Start date (Unix timestamp)"),
       until: z.string().optional().describe("End date (Unix timestamp)"),
+      breakdown: z.enum(["country", "city", "age", "gender"]).optional().describe("Required when requesting follower_demographics"),
     },
-    async ({ metric, since, until }) => {
+    async ({ metric, since, until, breakdown }) => {
       try {
-        const params: Record<string, unknown> = { metric };
-        if (since) params.since = since;
-        if (until) params.until = until;
+        const params = buildThreadsUserInsightParams(
+          metric,
+          since,
+          until,
+          breakdown
+        );
         const { data, rateLimit } = await client.threads("GET", `/${client.threadsUserId}/threads_insights`, params);
         return { content: [{ type: "text", text: JSON.stringify({ ...data as object, _rateLimit: rateLimit }, null, 2) }] };
       } catch (error) {

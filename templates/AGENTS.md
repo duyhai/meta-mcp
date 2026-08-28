@@ -7,6 +7,7 @@ This project uses the **meta-mcp** MCP server for Instagram Graph API (v26.0), T
 The MCP server is configured in your MCP settings. It requires environment variables for each platform you use:
 
 **Instagram**: `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_USER_ID`
+**Instagram DMs (Facebook Login)**: `INSTAGRAM_MESSAGING_ACCESS_TOKEN`, `INSTAGRAM_PAGE_ID`
 **Threads**: `THREADS_ACCESS_TOKEN`, `THREADS_USER_ID`
 **Meta (tokens/webhooks)**: `META_APP_ID`, `META_APP_SECRET`
 
@@ -16,7 +17,7 @@ The MCP server is configured in your MCP settings. It requires environment varia
 | Tool | Purpose |
 |------|---------|
 | `meta_exchange_token` | Short-lived to long-lived token (~60 days) |
-| `meta_refresh_token` | Refresh before expiration |
+| `meta_refresh_token` | Extend Instagram/Facebook or refresh Threads (`platform`) |
 | `meta_debug_token` | Check validity and scopes |
 | `meta_get_app_info` | App information |
 | `meta_subscribe_webhook` | Subscribe to webhooks |
@@ -135,5 +136,5 @@ Invoke meta MCP tools when the task involves:
 - Instagram requires a Business or Creator account; Threads works with any account
 - Media publishing is async: always check container status before assuming success
 - Threads limit: 250 posts/day, 100 deletes/day — check `threads_get_publishing_limit` before bulk ops
-- Tokens expire after ~60 days — use `meta_debug_token` to check, `meta_exchange_token` / `meta_refresh_token` to renew
+- Tokens expire after ~60 days — use `meta_debug_token` to check and `meta_refresh_token` with the correct `platform` to renew
 - Only set env vars for platforms you actually use

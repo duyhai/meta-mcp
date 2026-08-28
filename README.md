@@ -88,6 +88,8 @@ Tell your AI assistant things like:
       "env": {
         "INSTAGRAM_ACCESS_TOKEN": "your_ig_token",
         "INSTAGRAM_USER_ID": "your_ig_user_id",
+        "INSTAGRAM_MESSAGING_ACCESS_TOKEN": "your_page_access_token",
+        "INSTAGRAM_PAGE_ID": "your_linked_page_id",
         "THREADS_ACCESS_TOKEN": "your_threads_token",
         "THREADS_USER_ID": "your_threads_user_id"
       }
@@ -114,6 +116,8 @@ npm run build
       "env": {
         "INSTAGRAM_ACCESS_TOKEN": "your_ig_token",
         "INSTAGRAM_USER_ID": "your_ig_user_id",
+        "INSTAGRAM_MESSAGING_ACCESS_TOKEN": "your_page_access_token",
+        "INSTAGRAM_PAGE_ID": "your_linked_page_id",
         "THREADS_ACCESS_TOKEN": "your_threads_token",
         "THREADS_USER_ID": "your_threads_user_id"
       }
@@ -128,6 +132,8 @@ npm run build
 |----------|----------|-------------|
 | `INSTAGRAM_ACCESS_TOKEN` | For Instagram | Instagram Graph API access token |
 | `INSTAGRAM_USER_ID` | For Instagram | Instagram Business/Creator account ID |
+| `INSTAGRAM_MESSAGING_ACCESS_TOKEN` | For Instagram DMs | Page access token for Instagram Messaging with Facebook Login |
+| `INSTAGRAM_PAGE_ID` | For Instagram DMs | Facebook Page ID linked to the Instagram professional account |
 | `THREADS_ACCESS_TOKEN` | For Threads | Threads API access token |
 | `THREADS_USER_ID` | For Threads | Threads user ID |
 | `META_APP_ID` | For token/webhook tools | Meta App ID |
@@ -142,7 +148,7 @@ You only need to set the variables for the platforms you use. For example, if yo
 | Tool | Description |
 |------|-------------|
 | `meta_exchange_token` | Exchange short-lived token for long-lived token (~60 days) |
-| `meta_refresh_token` | Refresh a long-lived token before expiration |
+| `meta_refresh_token` | Extend an Instagram/Facebook token or refresh a Threads token (`platform` selects the flow) |
 | `meta_debug_token` | Inspect token validity, expiration, and scopes |
 | `meta_get_app_info` | Get Meta App information |
 | `meta_subscribe_webhook` | Subscribe to webhook notifications |
@@ -318,7 +324,7 @@ Your **`META_APP_ID`** and **`META_APP_SECRET`** are in **App Settings → Basic
 2. Go to **"Instagram Graph API" → "Settings"** and connect your Instagram Business account via a Facebook Page
 3. Open the [Graph API Explorer](https://developers.facebook.com/tools/explorer/)
    - Select your app
-   - Add permissions: `instagram_basic`, `instagram_content_publish`, `instagram_manage_comments`, `instagram_manage_insights`, `instagram_manage_contents`, `pages_show_list`, `pages_read_engagement`
+   - Add permissions: `instagram_basic`, `instagram_content_publish`, `instagram_manage_comments`, `instagram_manage_insights`, `instagram_manage_contents`, `instagram_manage_messages`, `pages_show_list`, `pages_read_engagement`, `pages_manage_metadata`
    - Click **"Generate Access Token"** and authorize
 4. The generated token is short-lived (~1 hour). Exchange it for a long-lived token (~60 days):
    ```
@@ -331,13 +337,16 @@ Your **`META_APP_ID`** and **`META_APP_SECRET`** are in **App Settings → Basic
    Or use the `meta_exchange_token` tool after setup.
 5. **Get your Instagram User ID** — call this with your token:
    ```
-   GET https://graph.facebook.com/v26.0/me/accounts?access_token=YOUR_TOKEN
+   GET https://graph.facebook.com/v26.0/me/accounts?fields=id,name,access_token&access_token=YOUR_TOKEN
    ```
    This returns your Facebook Pages. For each page, get the linked Instagram account:
    ```
    GET https://graph.facebook.com/v26.0/{page-id}?fields=instagram_business_account&access_token=YOUR_TOKEN
    ```
    The `instagram_business_account.id` is your **`INSTAGRAM_USER_ID`** (a numeric ID like `17841400123456789`).
+   For the DM tools, the matching Page's `id` is `INSTAGRAM_PAGE_ID` and its
+   `access_token` is `INSTAGRAM_MESSAGING_ACCESS_TOKEN`. Do not use the IG User
+   ID or the user token in their place.
 
 ### Step 3: Threads Setup
 
@@ -352,7 +361,7 @@ Your **`META_APP_ID`** and **`META_APP_SECRET`** are in **App Settings → Basic
    https://threads.net/oauth/authorize
      ?client_id=YOUR_APP_ID
      &redirect_uri=YOUR_REDIRECT_URI
-     &scope=threads_basic,threads_content_publish,threads_manage_insights,threads_manage_replies,threads_read_replies
+     &scope=threads_basic,threads_content_publish,threads_manage_insights,threads_manage_replies,threads_read_replies,threads_keyword_search,threads_manage_mentions,threads_delete,threads_location_tagging,threads_profile_discovery
      &response_type=code
    ```
    - For local testing, use `https://localhost/` as redirect URI (configure in App Settings → Threads API → Redirect URIs)
@@ -388,6 +397,8 @@ Set only the variables for the platforms you use:
 # Instagram (requires Business/Creator account)
 INSTAGRAM_ACCESS_TOKEN=EAAxxxxxxx...     # Long-lived token from Step 2
 INSTAGRAM_USER_ID=17841400123456789      # Numeric ID from Step 2.5
+INSTAGRAM_MESSAGING_ACCESS_TOKEN=EAA...  # Page token from Step 2.5 (DM tools only)
+INSTAGRAM_PAGE_ID=123456789012345        # Linked Facebook Page ID (DM tools only)
 
 # Threads (any account)
 THREADS_ACCESS_TOKEN=THQWxxxxxxx...      # Long-lived token from Step 3
@@ -402,8 +413,8 @@ META_APP_SECRET=abcdef0123456789abcdef   # From App Settings → Basic
 
 Access tokens expire after ~60 days. Refresh before expiration:
 
-- **Instagram**: Use `meta_exchange_token` with the current valid token
-- **Threads**: Use `meta_refresh_token` or call:
+- **Instagram**: Use `meta_refresh_token` with `platform=instagram` (requires `META_APP_ID` and `META_APP_SECRET`)
+- **Threads**: Use `meta_refresh_token` with `platform=threads` or call:
   ```
   GET https://graph.threads.net/refresh_access_token
     ?grant_type=th_refresh_token

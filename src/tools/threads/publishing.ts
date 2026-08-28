@@ -1,18 +1,26 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MetaClient } from "../../services/meta-client.js";
+import {
+  buildThreadsPollAttachment,
+  buildThreadsTextEntities,
+} from "../../services/api-contracts.js";
+import { waitForContainerStatus } from "../../services/container-polling.js";
 
-async function waitForThreadsContainer(client: MetaClient, containerId: string, maxWait = 30): Promise<void> {
-  const interval = 2000;
-  const maxAttempts = Math.ceil((maxWait * 1000) / interval);
-  for (let i = 0; i < maxAttempts; i++) {
-    const { data } = await client.threads("GET", `/${containerId}`, { fields: "status" });
-    const status = (data as { status?: string }).status;
-    if (status === "FINISHED") return;
-    if (status === "ERROR") throw new Error("Threads container processing failed (ERROR status)");
-    await new Promise((r) => setTimeout(r, interval));
-  }
-  throw new Error(`Threads container processing timed out after ${maxWait}s`);
+async function waitForThreadsContainer(client: MetaClient, containerId: string, maxWait = 120): Promise<void> {
+  await waitForContainerStatus(
+    async () => {
+      const { data } = await client.threads("GET", `/${containerId}`, {
+        fields: "status",
+      });
+      return (data as { status?: string }).status;
+    },
+    {
+      intervalMs: 5_000,
+      maxWaitMs: maxWait * 1000,
+      label: "Threads container",
+    }
+  );
 }
 
 export function registerThreadsPublishingTools(server: McpServer, client: MetaClient): void {
@@ -26,17 +34,21 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
       link_attachment: z.string().url().optional().describe("URL to attach as a link preview card (max 5 links per post)"),
       topic_tag: z.string().max(50).optional().describe("Topic tag for the post (1-50 chars, no periods or ampersands)"),
       quote_post_id: z.string().optional().describe("ID of a post to quote"),
-      poll_options: z.array(z.string()).min(2).max(4).optional().describe("Poll options (2-4 choices). Creates a poll attachment."),
+      poll_options: z.array(z.string().min(1).max(25)).min(2).max(4).optional().describe("Poll options (2-4 choices, each 1-25 characters). Creates a poll attachment."),
       gif_id: z.string().optional().describe("GIF ID from GIPHY (id field from GIPHY's API response). GIPHY is currently the only supported GIF provider (Tenor was sunset March 31, 2026)."),
       alt_text: z.string().max(1000).optional().describe("Alt text for accessibility (max 1000 chars)"),
       is_spoiler: z.boolean().optional().describe("Mark content as spoiler"),
+      spoiler_ranges: z.array(z.object({
+        offset: z.number().int().min(0),
+        length: z.number().int().positive(),
+      })).min(1).max(10).optional().describe("Up to 10 exact spoiler ranges within text. If omitted and is_spoiler=true, the entire text is marked as a spoiler."),
       is_ghost_post: z.boolean().optional().describe("Create a ghost post (auto-archived after 24h). Text-only, and per Meta's docs the only other feature supported alongside it is is_spoiler — do not combine with polls, GIFs, links, topic tags, location, reply approvals, or cross-sharing. Ghost posts also cannot be used to reply to a post."),
       enable_reply_approvals: z.boolean().optional().describe("Require replies to be approved before they're published. Not compatible with ghost posts."),
       location_id: z.string().optional().describe("Location ID to tag (from threads_search_locations)"),
       crossreshare_to_ig: z.boolean().optional().describe("Also share this post to the user's linked Instagram account as a Story"),
       crossreshare_to_ig_dark_mode: z.boolean().optional().describe("Cross-share to Instagram Stories in dark mode"),
     },
-    async ({ text, reply_control, link_attachment, topic_tag, quote_post_id, poll_options, gif_id, alt_text, is_spoiler, is_ghost_post, enable_reply_approvals, location_id, crossreshare_to_ig, crossreshare_to_ig_dark_mode }) => {
+    async ({ text, reply_control, link_attachment, topic_tag, quote_post_id, poll_options, gif_id, alt_text, is_spoiler, spoiler_ranges, is_ghost_post, enable_reply_approvals, location_id, crossreshare_to_ig, crossreshare_to_ig_dark_mode }) => {
       try {
         const params: Record<string, unknown> = { media_type: "TEXT", text };
         if (reply_control) params.reply_control = reply_control;
@@ -44,13 +56,18 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
         if (topic_tag) params.topic_tag = topic_tag;
         if (quote_post_id) params.quote_post_id = quote_post_id;
         if (poll_options) {
-          params.poll_attachment = JSON.stringify({ options: poll_options.map(o => ({ option_text: o })) });
+          params.poll_attachment = buildThreadsPollAttachment(poll_options);
         }
         if (gif_id) {
           params.gif_attachment = JSON.stringify({ gif_id, provider: "GIPHY" });
         }
         if (alt_text) params.alt_text = alt_text;
-        if (is_spoiler) params.is_spoiler = true;
+        const textEntities = buildThreadsTextEntities(
+          text,
+          is_spoiler === true,
+          spoiler_ranges
+        );
+        if (textEntities) params.text_entities = textEntities;
         if (is_ghost_post) params.is_ghost_post = true;
         if (enable_reply_approvals) params.enable_reply_approvals = true;
         if (location_id) params.location_id = location_id;
@@ -93,7 +110,7 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
         if (topic_tag) params.topic_tag = topic_tag;
         if (quote_post_id) params.quote_post_id = quote_post_id;
         if (alt_text) params.alt_text = alt_text;
-        if (is_spoiler) params.is_spoiler = true;
+        if (is_spoiler) params.is_spoiler_media = true;
         if (enable_reply_approvals) params.enable_reply_approvals = true;
         if (location_id) params.location_id = location_id;
         if (crossreshare_to_ig) params.crossreshare_to_ig = true;
@@ -135,7 +152,7 @@ export function registerThreadsPublishingTools(server: McpServer, client: MetaCl
         if (topic_tag) params.topic_tag = topic_tag;
         if (quote_post_id) params.quote_post_id = quote_post_id;
         if (alt_text) params.alt_text = alt_text;
-        if (is_spoiler) params.is_spoiler = true;
+        if (is_spoiler) params.is_spoiler_media = true;
         if (enable_reply_approvals) params.enable_reply_approvals = true;
         if (location_id) params.location_id = location_id;
         if (crossreshare_to_ig) params.crossreshare_to_ig = true;

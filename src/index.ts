@@ -88,6 +88,8 @@ export function createSandboxServer() {
     appSecret: "",
     instagramAccessToken: "",
     instagramUserId: "",
+    instagramMessagingAccessToken: "",
+    instagramPageId: "",
     threadsAccessToken: "",
     threadsUserId: "",
   };
