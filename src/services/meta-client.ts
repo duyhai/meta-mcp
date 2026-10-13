@@ -6,6 +6,7 @@ import {
   MetaTokenPlatform,
   THREADS_GRAPH_BASE,
 } from "./api-contracts.js";
+import { redactAccessTokens, redactTokenText } from "./redact.js";
 
 interface ClientResponse {
   data: unknown;
@@ -60,7 +61,9 @@ export class MetaClient {
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      throw new Error(`Meta API ${method} ${path} (${res.status}): ${text}`);
+      throw new Error(
+        `Meta API ${method} ${path} (${res.status}): ${redactTokenText(text)}`
+      );
     }
 
     const rateLimit = this.parseRateLimit(res.headers);
@@ -70,10 +73,10 @@ export class MetaClient {
       if (data.error) {
         throw new Error(`Meta API error: ${data.error.message} (code ${data.error.code})`);
       }
-      return { data, rateLimit };
+      return { data: redactAccessTokens(data), rateLimit };
     }
     const text = await res.text();
-    return { data: text || { success: true }, rateLimit };
+    return { data: text ? redactTokenText(text) : { success: true }, rateLimit };
   }
 
   async ig(
