@@ -11,11 +11,20 @@
  * the conversation, never surfaced through tool output.
  */
 
-const URL_TOKEN_RE = /([?&]access_token=)[^&\s]+/g;
+const URL_TOKEN_RE = /\b(access_token=)[^&\s"']+/g;
+const JSON_TOKEN_RE = /("access_token"\s*:\s*")[^"]*(")/g;
+
+/** Redact both the URL form (access_token=…) and the quoted JSON form
+ * ("access_token":"…") inside a plain string, e.g. a raw response body. */
+export function redactTokenText(text: string): string {
+  return text
+    .replace(URL_TOKEN_RE, "$1REDACTED")
+    .replace(JSON_TOKEN_RE, "$1REDACTED$2");
+}
 
 export function redactAccessTokens(value: unknown): unknown {
   if (typeof value === "string") {
-    return value.replace(URL_TOKEN_RE, "$1REDACTED");
+    return redactTokenText(value);
   }
   if (Array.isArray(value)) {
     return value.map(redactAccessTokens);
