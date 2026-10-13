@@ -35,10 +35,17 @@ type ToolRegistrar = Pick<McpServer, "tool">;
 function readOnlyFilter<T extends ToolRegistrar>(server: T): T {
   return new Proxy(server, {
     get(target, prop, receiver) {
-      if (prop === "tool") {
+      // Filter every registration surface the SDK offers, so a register
+      // function switching from tool() to registerTool() cannot bypass the
+      // allowlist silently.
+      if (prop === "tool" || prop === "registerTool") {
         return (name: string, ...rest: unknown[]) => {
           if (!READ_ONLY_TOOLS.has(name)) return undefined;
-          return (target.tool as (...a: unknown[]) => unknown)(name, ...rest);
+          const fn = (target as Record<string | symbol, unknown>)[prop];
+          if (typeof fn !== "function") {
+            throw new Error(`readOnlyFilter: server has no ${String(prop)}()`);
+          }
+          return (fn as (...a: unknown[]) => unknown).call(target, name, ...rest);
         };
       }
       return Reflect.get(target, prop, receiver);

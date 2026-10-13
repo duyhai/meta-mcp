@@ -11,6 +11,7 @@
  * Cloudflare Access this is defense in depth, not the only gate.
  */
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
+import { timingSafeEqual } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { loadConfig } from "./config.js";
@@ -44,12 +45,22 @@ function hostAllowed(req: IncomingMessage): boolean {
 }
 
 function authorized(req: IncomingMessage): boolean {
-  return req.headers.authorization === `Bearer ${AUTH_TOKEN}`;
+  const expected = Buffer.from(`Bearer ${AUTH_TOKEN}`);
+  const got = Buffer.from(req.headers.authorization ?? "");
+  // Length comparison leaks only the length; timingSafeEqual needs equal sizes.
+  return got.length === expected.length && timingSafeEqual(got, expected);
 }
+
+const MAX_BODY_BYTES = 1_048_576; // 1 MiB — requests are JSON-RPC calls, not uploads.
 
 async function readBody(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
-  for await (const c of req) chunks.push(c as Buffer);
+  let size = 0;
+  for await (const c of req) {
+    size += (c as Buffer).length;
+    if (size > MAX_BODY_BYTES) throw new Error("body too large");
+    chunks.push(c as Buffer);
+  }
   const raw = Buffer.concat(chunks).toString("utf8");
   return raw ? JSON.parse(raw) : undefined;
 }
