@@ -49,18 +49,20 @@ export function registerFbCommentTools(server: McpServer, client: MetaClient): v
       post_id: z.string().describe("Post ID (from fb_get_page_posts)"),
       limit: z.number().optional().describe("Number of comments to return"),
       after: z.string().optional().describe("Pagination cursor"),
-      include_hidden: z
+      include_replies: z
         .boolean()
         .optional()
-        .describe("true to include comments hidden by the Page (filter=stream)"),
+        .describe(
+          "true to flatten replies into one chronological list (filter=stream); default is top-level comments only. Hidden comments are visible either way with a Page token — check is_hidden."
+        ),
     },
-    async ({ post_id, limit, after, include_hidden }) => {
+    async ({ post_id, limit, after, include_replies }) => {
       try {
         const params: Record<string, unknown> = {
           fields:
             "id,message,from,created_time,like_count,comment_count,is_hidden,permalink_url",
         };
-        if (include_hidden) params.filter = "stream";
+        if (include_replies) params.filter = "stream";
         if (limit) params.limit = limit;
         if (after) params.after = after;
         const { data, rateLimit } = await client.ig("GET", `/${post_id}/comments`, params);
