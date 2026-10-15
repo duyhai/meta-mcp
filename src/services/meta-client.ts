@@ -204,6 +204,13 @@ export class MetaClient {
     return this.config.instagramPageId;
   }
 
+  get facebookPageId(): string {
+    if (!this.config.facebookPageId) {
+      throw new Error("FACEBOOK_PAGE_ID is not configured.");
+    }
+    return this.config.facebookPageId;
+  }
+
   get threadsUserId(): string {
     if (!this.config.threadsUserId) {
       throw new Error("THREADS_USER_ID is not configured.");
