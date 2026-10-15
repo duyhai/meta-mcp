@@ -7,6 +7,7 @@ export interface MetaConfig {
   instagramPageId: string;
   threadsAccessToken: string;
   threadsUserId: string;
+  facebookPageId: string;
 }
 
 export function loadConfig(): MetaConfig {
@@ -20,5 +21,6 @@ export function loadConfig(): MetaConfig {
     instagramPageId: process.env.INSTAGRAM_PAGE_ID || "",
     threadsAccessToken: process.env.THREADS_ACCESS_TOKEN || "",
     threadsUserId: process.env.THREADS_USER_ID || "",
+    facebookPageId: process.env.FACEBOOK_PAGE_ID || "",
   };
 }

@@ -8,6 +8,9 @@ import { MetaClient } from "./services/meta-client.js";
 // Meta platform tools
 import { registerMetaAuthTools } from "./tools/meta/auth.js";
 
+// Facebook Page tools
+import { registerFbCommentTools } from "./tools/facebook/comments.js";
+
 // Instagram tools
 import { registerIgPublishingTools } from "./tools/instagram/publishing.js";
 import { registerIgMediaTools } from "./tools/instagram/media.js";
@@ -42,6 +45,7 @@ const client = new MetaClient(config);
 
 // Register tools
 registerMetaAuthTools(server, client);
+registerFbCommentTools(server, client);
 registerIgPublishingTools(server, client);
 registerIgMediaTools(server, client);
 registerIgCommentTools(server, client);
@@ -92,10 +96,12 @@ export function createSandboxServer() {
     instagramPageId: "",
     threadsAccessToken: "",
     threadsUserId: "",
+    facebookPageId: "",
   };
   const mockClient = new MetaClient(mockConfig);
 
   registerMetaAuthTools(sandbox, mockClient);
+  registerFbCommentTools(sandbox, mockClient);
   registerIgPublishingTools(sandbox, mockClient);
   registerIgMediaTools(sandbox, mockClient);
   registerIgCommentTools(sandbox, mockClient);

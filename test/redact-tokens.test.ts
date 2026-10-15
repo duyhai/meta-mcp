@@ -68,7 +68,7 @@ test("error responses and non-JSON bodies are redacted (URL and quoted JSON form
   const { MetaClient } = await import("../src/services/meta-client.js");
   const client = new MetaClient({
     appId: "", appSecret: "", instagramAccessToken: "tok", instagramUserId: "1",
-    instagramMessagingAccessToken: "", instagramPageId: "", threadsAccessToken: "", threadsUserId: "",
+    instagramMessagingAccessToken: "", instagramPageId: "", threadsAccessToken: "", threadsUserId: "", facebookPageId: "9",
   });
   const realFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = realFetch; });
@@ -92,4 +92,30 @@ test("error responses and non-JSON bodies are redacted (URL and quoted JSON form
   })) as unknown as typeof fetch;
   const { data } = await client.ig("GET", "/x");
   assert.equal(data, "done access_token=REDACTED");
+});
+
+test("Facebook Page post/comment responses are redacted through the client", async (t) => {
+  const { MetaClient } = await import("../src/services/meta-client.js");
+  const fbClient = new MetaClient({
+    appId: "", appSecret: "", instagramAccessToken: "tok", instagramUserId: "1",
+    instagramMessagingAccessToken: "", instagramPageId: "",
+    threadsAccessToken: "", threadsUserId: "", facebookPageId: "537",
+  });
+  const realFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = realFetch; });
+  globalThis.fetch = (async () => ({
+    ok: true, status: 200,
+    headers: new Headers({ "content-type": "application/json" }),
+    json: async () => ({
+      data: [{ id: "537_1", message: "post", comments: {
+        data: [{ id: "c1", message: "hi" }],
+        paging: { next: "https://graph.facebook.com/v26.0/537_1/comments?access_token=EAAXfbleak&after=X" },
+      }}],
+      paging: { next: "https://graph.facebook.com/v26.0/537/posts?access_token=EAAXfbleak2" },
+    }),
+  })) as unknown as typeof fetch;
+  const { data } = await fbClient.ig("GET", `/${fbClient.facebookPageId}/posts`);
+  const text = JSON.stringify(data);
+  assert.ok(!text.includes("EAAXfbleak"), "token leaked in FB response");
+  assert.match(text, /access_token=REDACTED/);
 });

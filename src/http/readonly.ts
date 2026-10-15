@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MetaClient } from "../services/meta-client.js";
+import { registerFbCommentTools } from "../tools/facebook/comments.js";
 import { registerIgCommentTools } from "../tools/instagram/comments.js";
 import { registerIgMediaTools } from "../tools/instagram/media.js";
 import { registerIgMentionTools } from "../tools/instagram/mentions.js";
@@ -26,6 +27,12 @@ export const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
   "ig_get_profile",
   "ig_get_mentioned_comments",
   "ig_get_tagged_media",
+  // Facebook Page reads (duyhai/home-server#39). Reads only — the fb write
+  // tools (fb_reply_to_comment, fb_hide_comment) stay Mac-only.
+  "fb_get_page_posts",
+  "fb_get_comments",
+  "fb_get_comment",
+  "fb_get_comment_replies",
 ]);
 
 /** Minimal surface the register functions actually use. */
@@ -59,6 +66,7 @@ export function registerReadOnlyIgTools(
   client: MetaClient
 ): void {
   const filtered = readOnlyFilter(server) as McpServer;
+  registerFbCommentTools(filtered, client);
   registerIgCommentTools(filtered, client);
   registerIgMediaTools(filtered, client);
   registerIgMentionTools(filtered, client);
