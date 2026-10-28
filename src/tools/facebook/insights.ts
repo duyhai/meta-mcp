@@ -88,7 +88,7 @@ export function registerFbInsightTools(server: McpServer, client: MetaClient): v
         let res: Awaited<ReturnType<typeof client.ig>>;
         let insightsError: string | undefined;
         try {
-          res = await client.ig("GET", `/${post_id}`, { fields: `insights.metric(${m}),${countFields}` });
+          res = await client.ig("GET", `/${post_id}`, { fields: `insights.metric(${m}).period(lifetime),${countFields}` });
         } catch (error) {
           insightsError = error instanceof Error ? error.message : String(error);
           res = await client.ig("GET", `/${post_id}`, { fields: countFields });

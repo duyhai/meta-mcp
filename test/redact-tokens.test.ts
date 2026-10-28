@@ -181,7 +181,7 @@ test("insights tool responses are redacted end to end", async (t) => {
   assert.match(urls[0], /\/537\/insights\?.*metric=page_media_view%2Cpage_total_media_view_unique/);
   assert.match(urls[0], /period=week/);
   // Post insights + counts in ONE request (field expansion).
-  assert.match(decodeURIComponent(urls[1]), /\/537_1\?.*fields=insights\.metric\(post_media_view,.*\),shares,/);
+  assert.match(decodeURIComponent(urls[1]), /\/537_1\?.*fields=insights\.metric\(post_media_view,[a-z_,]*\)\.period\(lifetime\),shares,/);
   assert.match(urls[2], /\/178\/insights\?.*metric_type=total_value/);
   assert.match(urls[2], /period=day/);
   assert.equal(urls.length, 4);
