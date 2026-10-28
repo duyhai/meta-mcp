@@ -149,6 +149,7 @@ test("insights tool responses are redacted end to end", async (t) => {
       headers: new Headers({ "content-type": "application/json" }),
       json: async () => ({
         data: [{ name: "views", period: "day", values: [{ value: 3 }], id: "x/insights/views/day" }],
+        insights: { data: [{ name: "post_media_view", period: "lifetime", values: [{ value: 9 }] }] },
         shares: { count: 2 },
         comments: { data: [], summary: { total_count: 5 } },
         paging: {
@@ -170,18 +171,65 @@ test("insights tool responses are redacted end to end", async (t) => {
     assert.ok(!res.isError, `${name} errored: ${res.content[0].text}`);
     const text = res.content[0].text;
     assert.ok(!text.includes("EAAXinsleak"), `token leaked in ${name}`);
-    assert.match(text, /access_token=REDACTED/, `${name} lost its paging`);
+    // fb_get_post_insights returns lifetime values only, no paging.
+    if (name !== "fb_get_post_insights") {
+      assert.match(text, /access_token=REDACTED/, `${name} lost its paging`);
+    }
   }
 
   // Defaults hit current (non-removed) metrics and the right endpoints.
   assert.match(urls[0], /\/537\/insights\?.*metric=page_media_view%2Cpage_total_media_view_unique/);
   assert.match(urls[0], /period=week/);
-  assert.match(urls[1], /\/537_1\/insights\?.*metric=post_media_view/);
-  assert.match(urls[2], /\/537_1\?.*fields=shares/);
-  assert.match(urls[3], /\/178\/insights\?.*metric_type=total_value/);
-  assert.match(urls[3], /period=day/);
+  // Post insights + counts in ONE request (field expansion).
+  assert.match(decodeURIComponent(urls[1]), /\/537_1\?.*fields=insights\.metric\(post_media_view,.*\),shares,/);
+  assert.match(urls[2], /\/178\/insights\?.*metric_type=total_value/);
+  assert.match(urls[2], /period=day/);
+  assert.equal(urls.length, 4);
   for (const u of urls) assert.ok(!/impressions/.test(u), `removed metric requested: ${u}`);
 
   const post = JSON.parse((await handlers.get("fb_get_post_insights")!({ post_id: "537_1" })).content[0].text);
   assert.deepEqual(post.counts, { shares: 2, comments: 5, reactions: null });
+  assert.equal(post.data[0].name, "post_media_view");
+  assert.equal(post.insights_error, undefined);
+});
+
+test("fb_get_post_insights keeps counts when the insights part fails", async (t) => {
+  const { MetaClient } = await import("../src/services/meta-client.js");
+  const { registerFbInsightTools } = await import("../src/tools/facebook/insights.js");
+  const c = new MetaClient({
+    appId: "", appSecret: "", instagramAccessToken: "tok", instagramUserId: "178",
+    instagramMessagingAccessToken: "", instagramPageId: "",
+    threadsAccessToken: "", threadsUserId: "", facebookPageId: "537",
+  });
+  type Handler = (args: Record<string, unknown>) => Promise<{ content: { text: string }[]; isError?: boolean }>;
+  let handler: Handler | undefined;
+  registerFbInsightTools({ tool: (name: string, ...rest: unknown[]) => {
+    if (name === "fb_get_post_insights") handler = rest[rest.length - 1] as Handler;
+  } } as never, c);
+
+  const realFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = realFetch; });
+  const urls: string[] = [];
+  globalThis.fetch = (async (url: string) => {
+    urls.push(url);
+    if (decodeURIComponent(url).includes("insights.metric(")) {
+      return { ok: false, status: 400, text: async () =>
+        '{"error":{"message":"(#10) requires read_insights access_token=EAAXfailleak","code":10}}' };
+    }
+    return {
+      ok: true, status: 200,
+      headers: new Headers({ "content-type": "application/json" }),
+      json: async () => ({ comments: { data: [], summary: { total_count: 4 } }, reactions: { data: [], summary: { total_count: 7 } } }),
+    };
+  }) as unknown as typeof fetch;
+
+  const res = await handler!({ post_id: "537_1" });
+  assert.ok(!res.isError);
+  const text = res.content[0].text;
+  assert.ok(!text.includes("EAAXfailleak"), "token leaked via insights_error");
+  const out = JSON.parse(text);
+  assert.match(out.insights_error, /read_insights/);
+  assert.deepEqual(out.data, []);
+  assert.deepEqual(out.counts, { shares: 0, comments: 4, reactions: 7 });
+  assert.equal(urls.length, 2);
 });
