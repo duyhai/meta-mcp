@@ -23,18 +23,27 @@ export function registerIgProfileTools(server: McpServer, client: MetaClient): v
   // ─── ig_get_account_insights ─────────────────────────────────
   server.tool(
     "ig_get_account_insights",
-    "Get Instagram account insights. Note: 'impressions', 'email_contacts', 'phone_call_clicks', 'text_message_clicks', 'get_directions_clicks', 'website_clicks', 'profile_views' were deprecated in v22.0. Use 'views', 'reach', 'follower_count', 'reposts' instead.",
+    "Get Instagram account insights. Current metrics: views, reach, accounts_engaged, total_interactions, likes, comments, saves, shares, replies, reposts, profile_links_taps, follows_and_unfollows (period=day), and follower_demographics, engaged_audience_demographics (period=lifetime, use timeframe). Every metric except reach needs metric_type=total_value (the default here); reach also supports time_series. 'impressions' (removed), 'follower_count', 'profile_views', 'website_clicks' and other v22-deprecated metrics are not available. Requires instagram_manage_insights.",
     {
-      metric: z.string().describe("Comma-separated metrics: views,reach,follower_count,reposts,accounts_engaged,total_interactions"),
-      period: z.enum(["day", "week", "days_28", "month", "lifetime"]).describe("Aggregation period"),
-      since: z.string().optional().describe("Start date (Unix timestamp or ISO 8601)"),
-      until: z.string().optional().describe("End date (Unix timestamp or ISO 8601)"),
+      metric: z.string().describe("Comma-separated metrics, e.g. views,reach,accounts_engaged,total_interactions,saves,shares"),
+      period: z.enum(["day", "lifetime"]).optional().describe("Aggregation period (default: day; lifetime only for *_demographics)"),
+      metric_type: z.enum(["total_value", "time_series"]).optional().describe("Default total_value. time_series works for reach only."),
+      breakdown: z.string().optional().describe("total_value only, e.g. media_product_type, follow_type, follower_type, contact_button_type; demographics: age, city, country, gender"),
+      since: z.string().optional().describe("Start (Unix timestamp or ISO 8601). Omitting since/until means the last 24 hours."),
+      until: z.string().optional().describe("End (Unix timestamp or ISO 8601)"),
+      timeframe: z.string().optional().describe("Demographics only: this_week, this_month, prev_month (overrides since/until)"),
     },
-    async ({ metric, period, since, until }) => {
+    async ({ metric, period, metric_type, breakdown, since, until, timeframe }) => {
       try {
-        const params: Record<string, unknown> = { metric, period };
+        const params: Record<string, unknown> = {
+          metric,
+          period: period || "day",
+          metric_type: metric_type || "total_value",
+        };
+        if (breakdown) params.breakdown = breakdown;
         if (since) params.since = since;
         if (until) params.until = until;
+        if (timeframe) params.timeframe = timeframe;
         const { data, rateLimit } = await client.ig("GET", `/${client.igUserId}/insights`, params);
         return { content: [{ type: "text", text: JSON.stringify({ ...data as object, _rateLimit: rateLimit }, null, 2) }] };
       } catch (error) {

@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MetaClient } from "../services/meta-client.js";
 import { registerFbCommentTools } from "../tools/facebook/comments.js";
+import { registerFbInsightTools } from "../tools/facebook/insights.js";
 import { registerIgCommentTools } from "../tools/instagram/comments.js";
 import { registerIgMediaTools } from "../tools/instagram/media.js";
 import { registerIgMentionTools } from "../tools/instagram/mentions.js";
@@ -33,6 +34,9 @@ export const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
   "fb_get_comments",
   "fb_get_comment",
   "fb_get_comment_replies",
+  // Facebook Page/post insights (read_insights).
+  "fb_get_page_insights",
+  "fb_get_post_insights",
 ]);
 
 /** Minimal surface the register functions actually use. */
@@ -67,6 +71,7 @@ export function registerReadOnlyIgTools(
 ): void {
   const filtered = readOnlyFilter(server) as McpServer;
   registerFbCommentTools(filtered, client);
+  registerFbInsightTools(filtered, client);
   registerIgCommentTools(filtered, client);
   registerIgMediaTools(filtered, client);
   registerIgMentionTools(filtered, client);

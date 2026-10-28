@@ -119,3 +119,69 @@ test("Facebook Page post/comment responses are redacted through the client", asy
   assert.ok(!text.includes("EAAXfbleak"), "token leaked in FB response");
   assert.match(text, /access_token=REDACTED/);
 });
+
+test("insights tool responses are redacted end to end", async (t) => {
+  const { MetaClient } = await import("../src/services/meta-client.js");
+  const { registerFbInsightTools } = await import("../src/tools/facebook/insights.js");
+  const { registerIgProfileTools } = await import("../src/tools/instagram/profile.js");
+  const { registerIgMediaTools } = await import("../src/tools/instagram/media.js");
+  const insightsClient = new MetaClient({
+    appId: "", appSecret: "", instagramAccessToken: "tok", instagramUserId: "178",
+    instagramMessagingAccessToken: "", instagramPageId: "",
+    threadsAccessToken: "", threadsUserId: "", facebookPageId: "537",
+  });
+  type Handler = (args: Record<string, unknown>) => Promise<{ content: { text: string }[]; isError?: boolean }>;
+  const handlers = new Map<string, Handler>();
+  const server = {
+    tool: (name: string, ...rest: unknown[]) => { handlers.set(name, rest[rest.length - 1] as Handler); },
+  };
+  registerFbInsightTools(server as never, insightsClient);
+  registerIgProfileTools(server as never, insightsClient);
+  registerIgMediaTools(server as never, insightsClient);
+
+  const realFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = realFetch; });
+  const urls: string[] = [];
+  globalThis.fetch = (async (url: string) => {
+    urls.push(url);
+    return {
+      ok: true, status: 200,
+      headers: new Headers({ "content-type": "application/json" }),
+      json: async () => ({
+        data: [{ name: "views", period: "day", values: [{ value: 3 }], id: "x/insights/views/day" }],
+        shares: { count: 2 },
+        comments: { data: [], summary: { total_count: 5 } },
+        paging: {
+          previous: "https://graph.facebook.com/v26.0/537/insights?access_token=EAAXinsleak&since=1",
+          next: "https://graph.facebook.com/v26.0/537/insights?access_token=EAAXinsleak2&until=2",
+        },
+      }),
+    };
+  }) as unknown as typeof fetch;
+
+  const calls: [string, Record<string, unknown>][] = [
+    ["fb_get_page_insights", { period: "week" }],
+    ["fb_get_post_insights", { post_id: "537_1" }],
+    ["ig_get_account_insights", { metric: "views,reach" }],
+    ["ig_get_media_insights", { media_id: "m1" }],
+  ];
+  for (const [name, args] of calls) {
+    const res = await handlers.get(name)!(args);
+    assert.ok(!res.isError, `${name} errored: ${res.content[0].text}`);
+    const text = res.content[0].text;
+    assert.ok(!text.includes("EAAXinsleak"), `token leaked in ${name}`);
+    assert.match(text, /access_token=REDACTED/, `${name} lost its paging`);
+  }
+
+  // Defaults hit current (non-removed) metrics and the right endpoints.
+  assert.match(urls[0], /\/537\/insights\?.*metric=page_media_view%2Cpage_total_media_view_unique/);
+  assert.match(urls[0], /period=week/);
+  assert.match(urls[1], /\/537_1\/insights\?.*metric=post_media_view/);
+  assert.match(urls[2], /\/537_1\?.*fields=shares/);
+  assert.match(urls[3], /\/178\/insights\?.*metric_type=total_value/);
+  assert.match(urls[3], /period=day/);
+  for (const u of urls) assert.ok(!/impressions/.test(u), `removed metric requested: ${u}`);
+
+  const post = JSON.parse((await handlers.get("fb_get_post_insights")!({ post_id: "537_1" })).content[0].text);
+  assert.deepEqual(post.counts, { shares: 2, comments: 5, reactions: null });
+});

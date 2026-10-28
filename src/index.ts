@@ -10,6 +10,7 @@ import { registerMetaAuthTools } from "./tools/meta/auth.js";
 
 // Facebook Page tools
 import { registerFbCommentTools } from "./tools/facebook/comments.js";
+import { registerFbInsightTools } from "./tools/facebook/insights.js";
 
 // Instagram tools
 import { registerIgPublishingTools } from "./tools/instagram/publishing.js";
@@ -46,6 +47,7 @@ const client = new MetaClient(config);
 // Register tools
 registerMetaAuthTools(server, client);
 registerFbCommentTools(server, client);
+registerFbInsightTools(server, client);
 registerIgPublishingTools(server, client);
 registerIgMediaTools(server, client);
 registerIgCommentTools(server, client);
@@ -102,6 +104,7 @@ export function createSandboxServer() {
 
   registerMetaAuthTools(sandbox, mockClient);
   registerFbCommentTools(sandbox, mockClient);
+  registerFbInsightTools(sandbox, mockClient);
   registerIgPublishingTools(sandbox, mockClient);
   registerIgMediaTools(sandbox, mockClient);
   registerIgCommentTools(sandbox, mockClient);
