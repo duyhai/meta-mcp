@@ -192,7 +192,7 @@ You only need to set the variables for the platforms you use. For example, if yo
 | Tool | Description |
 |------|-------------|
 | `ig_get_profile` | Get account profile info |
-| `ig_get_account_insights` | Get account-level analytics (views, reach, follower_count) |
+| `ig_get_account_insights` | Get account-level analytics (views, reach, accounts_engaged, saves, shares; metric_type=total_value) |
 | `ig_business_discovery` | Look up another business account |
 | `ig_get_collaboration_invites` | Get pending collaboration invites |
 | `ig_respond_collaboration_invite` | Accept or decline collaboration invites |

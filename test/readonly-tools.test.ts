@@ -28,6 +28,17 @@ test("hosted entrypoint registers exactly the read-only allowlist", () => {
   assert.equal(server.registered.length, READ_ONLY_TOOLS.size);
 });
 
+test("insight reads are on the hosted allowlist", () => {
+  const server = fakeServer();
+  registerReadOnlyIgTools(server as never, client);
+  for (const name of [
+    "ig_get_media_insights", "ig_get_account_insights",
+    "fb_get_page_insights", "fb_get_post_insights",
+  ]) {
+    assert.ok(server.registered.includes(name), `${name} must be registered`);
+  }
+});
+
 test("no write, delete, messaging, token or webhook tool slips through", () => {
   const server = fakeServer();
   registerReadOnlyIgTools(server as never, client);

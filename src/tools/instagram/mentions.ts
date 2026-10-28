@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { graphId } from "../ids.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MetaClient } from "../../services/meta-client.js";
 
@@ -8,7 +9,7 @@ export function registerIgMentionTools(server: McpServer, client: MetaClient): v
     "ig_get_mentioned_comments",
     "Get comments where the account was @mentioned. Returns the media and comment details.",
     {
-      comment_id: z.string().describe("Comment ID from a mention notification"),
+      comment_id: graphId().describe("Comment ID from a mention notification"),
       fields: z.string().optional().describe("Fields to return (default: id,text,timestamp,username,media)"),
     },
     async ({ comment_id, fields }) => {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { graphId } from "../ids.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MetaClient } from "../../services/meta-client.js";
 
@@ -46,7 +47,7 @@ export function registerFbCommentTools(server: McpServer, client: MetaClient): v
     "fb_get_comments",
     "Get comments on a Facebook Page post.",
     {
-      post_id: z.string().describe("Post ID (from fb_get_page_posts)"),
+      post_id: graphId().describe("Post ID (from fb_get_page_posts)"),
       limit: z.number().optional().describe("Number of comments to return"),
       after: z.string().optional().describe("Pagination cursor"),
       include_replies: z
@@ -78,7 +79,7 @@ export function registerFbCommentTools(server: McpServer, client: MetaClient): v
     "fb_get_comment",
     "Get details of a single Facebook comment.",
     {
-      comment_id: z.string().describe("Comment ID"),
+      comment_id: graphId().describe("Comment ID"),
     },
     async ({ comment_id }) => {
       try {
@@ -98,7 +99,7 @@ export function registerFbCommentTools(server: McpServer, client: MetaClient): v
     "fb_get_comment_replies",
     "Get replies to a Facebook comment.",
     {
-      comment_id: z.string().describe("Comment ID to get replies for"),
+      comment_id: graphId().describe("Comment ID to get replies for"),
       limit: z.number().optional().describe("Number of replies to return"),
       after: z.string().optional().describe("Pagination cursor"),
     },
@@ -122,7 +123,7 @@ export function registerFbCommentTools(server: McpServer, client: MetaClient): v
     "fb_reply_to_comment",
     "Reply to a Facebook comment as the Page. Requires pages_manage_engagement.",
     {
-      comment_id: z.string().describe("Comment ID to reply to"),
+      comment_id: graphId().describe("Comment ID to reply to"),
       message: z.string().describe("Reply text"),
     },
     async ({ comment_id, message }) => {
@@ -140,7 +141,7 @@ export function registerFbCommentTools(server: McpServer, client: MetaClient): v
     "fb_hide_comment",
     "Hide or unhide a comment on the Page. Requires pages_manage_engagement.",
     {
-      comment_id: z.string().describe("Comment ID"),
+      comment_id: graphId().describe("Comment ID"),
       hide: z.boolean().describe("true to hide, false to unhide"),
     },
     async ({ comment_id, hide }) => {

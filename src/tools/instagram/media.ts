@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { graphId } from "../ids.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MetaClient } from "../../services/meta-client.js";
 
@@ -33,7 +34,7 @@ export function registerIgMediaTools(server: McpServer, client: MetaClient): voi
     "ig_get_media",
     "Get details of a specific Instagram media post.",
     {
-      media_id: z.string().describe("Media ID"),
+      media_id: graphId().describe("Media ID"),
       fields: z.string().optional().describe("Comma-separated fields (default: id,caption,media_type,media_url,permalink,timestamp,like_count,comments_count)"),
     },
     async ({ media_id, fields }) => {
@@ -52,7 +53,7 @@ export function registerIgMediaTools(server: McpServer, client: MetaClient): voi
     "ig_delete_media",
     "Delete an Instagram media post (posts, carousels, reels, stories). This action is irreversible. Requires instagram_manage_contents permission.",
     {
-      media_id: z.string().describe("Media ID to delete"),
+      media_id: graphId().describe("Media ID to delete"),
     },
     async ({ media_id }) => {
       try {
@@ -69,7 +70,7 @@ export function registerIgMediaTools(server: McpServer, client: MetaClient): voi
     "ig_get_media_insights",
     "Get insights/analytics for a specific media post. Note: 'impressions' and 'video_views' were deprecated in v22.0 — use 'views' instead. Available metrics: views, reach, saved, shares, likes, comments, reposts, reels_skip_rate.",
     {
-      media_id: z.string().describe("Media ID"),
+      media_id: graphId().describe("Media ID"),
       metric: z.string().optional().describe("Comma-separated metrics (default: views,reach,saved,shares). For REEL add: likes,comments,reposts,reels_skip_rate"),
     },
     async ({ media_id, metric }) => {
@@ -88,7 +89,7 @@ export function registerIgMediaTools(server: McpServer, client: MetaClient): voi
     "ig_toggle_comments",
     "Enable or disable comments on an Instagram media post.",
     {
-      media_id: z.string().describe("Media ID"),
+      media_id: graphId().describe("Media ID"),
       enabled: z.boolean().describe("true to enable comments, false to disable"),
     },
     async ({ media_id, enabled }) => {
