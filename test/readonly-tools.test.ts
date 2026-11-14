@@ -39,7 +39,16 @@ test("insight reads are on the hosted allowlist", () => {
   }
 });
 
-test("no write, delete, messaging, token or webhook tool slips through", () => {
+test("DM reads are on the hosted allowlist; sending is not", () => {
+  const server = fakeServer();
+  registerReadOnlyIgTools(server as never, client);
+  for (const name of ["ig_get_conversations", "ig_get_messages", "ig_get_message"]) {
+    assert.ok(server.registered.includes(name), `${name} must be registered`);
+  }
+  assert.ok(!server.registered.includes("ig_send_message"), "ig_send_message must not be registered");
+});
+
+test("no write, delete, DM-send, token or webhook tool slips through", () => {
   const server = fakeServer();
   registerReadOnlyIgTools(server as never, client);
   const banned = [

@@ -5,6 +5,7 @@ import { registerFbInsightTools } from "../tools/facebook/insights.js";
 import { registerIgCommentTools } from "../tools/instagram/comments.js";
 import { registerIgMediaTools } from "../tools/instagram/media.js";
 import { registerIgMentionTools } from "../tools/instagram/mentions.js";
+import { registerIgMessagingTools } from "../tools/instagram/messaging.js";
 import { registerIgProfileTools } from "../tools/instagram/profile.js";
 
 /**
@@ -16,6 +17,12 @@ import { registerIgProfileTools } from "../tools/instagram/profile.js";
  * messaging, no Threads, and no token/webhook management is registered at
  * all. Enforcement is server-side by this allowlist: anything not listed
  * here does not exist on the hosted endpoint.
+ *
+ * DM READS are the one messaging exception (owner's decision 2026-11-14):
+ * ig_get_conversations / ig_get_messages / ig_get_message. ig_send_message is
+ * registered by the same function but filtered out here. Note the token's
+ * instagram_manage_messages scope CAN send -- Meta has no read-only DM scope --
+ * so this allowlist is what keeps the hosted endpoint from sending.
  */
 export const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
   "ig_get_comments",
@@ -37,6 +44,11 @@ export const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
   // Facebook Page/post insights (read_insights).
   "fb_get_page_insights",
   "fb_get_post_insights",
+  // Instagram DM reads (instagram_manage_messages). Sending stays Mac-only and
+  // permission-gated; see the doc comment above.
+  "ig_get_conversations",
+  "ig_get_messages",
+  "ig_get_message",
 ]);
 
 /** Minimal surface the register functions actually use. */
@@ -75,5 +87,6 @@ export function registerReadOnlyIgTools(
   registerIgCommentTools(filtered, client);
   registerIgMediaTools(filtered, client);
   registerIgMentionTools(filtered, client);
+  registerIgMessagingTools(filtered, client);
   registerIgProfileTools(filtered, client);
 }
